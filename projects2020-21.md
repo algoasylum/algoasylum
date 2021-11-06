@@ -4,7 +4,7 @@ If we were to manage air pollution, the first step would be to carefully and tho
 
 As we set out to build it, we researched and tried out several common low-cost sensors. We chose the sensors from the well-reputed MQ series: the MQ-7 for Carbon Monoxide and the MQ-131 for Ozone. For the MQ-7, we procured a basic module called the Flying Fish FC-22 module. Despite its reputation and widespread use, we found it severely lacking in documentation. Through further investigation, we conclusively determined that the Flying Fish module has the wrong circuitry for the sensor. Problems such as these are commonplace in low-cost sensors. The performance of many popular air pollutant sensors is not tested, and there is very little, or misleading, documentation about their usage. Our work over the past year highlights major issues in the field that can be taken up further as full-time research projects, or to develop new products entirely.
 
-
+---
 
 [Dyslexia Detection](https://github.com/algoasylum/Dyslexia_detection), Samik Pal and Soham Joshi 
 
@@ -18,10 +18,13 @@ Highlights:
     - Short time Fourier Transform: Binning on temporal data and then considering the frequency components to evaluate the temporal significance of certain spectral values.
 - PCA: Principal Component Analysis on binned data to reduce the number of dimensions.
 
+--- 
 
 Decision Trees, Purva Bhalekar and Ruchi Pendse
 
 What does entropy (and other information-theoretic concepts) mean in the context of decision trees? We worked on two perspectives of performance: (i) how accurate a tree is, converging towards the notion of an optimal decision tree, and (ii) the time for training and testing, parallelizing key components for speedups. We also developed a methodology for comparing different implementations of the core platform and libraries.
+
+---
 
 [Epidemic Spread](https://github.com/algoasylum/TDA-UMAP), Soham Joshi and Abhishek Deshpande 
 
@@ -30,6 +33,8 @@ Various methods have been developed to model the COVID-19 spread, the most typic
 Preliminary results (using UMAP) presented at pycon India & Intel AI Developers summit. 
 
 This was in collaboration with the inimitable Varad Deshmukh. Still collaborating after all these years :)
+
+---
 
 [Rainfall Pattern Quantification](https://github.com/algoasylum/SatelliteImageAnalysis), Siddharth Srivastava, Yash Damania, Raghav Gaggar and Yash Chaudhari
 

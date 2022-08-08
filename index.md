@@ -16,8 +16,8 @@ A few links to get you started:
 
 
 ## Talks, PyCon India 2020
-- [Understanding UMAP: The Internal Workings of a State of the Art Clustering Algorithm] (https://youtu.be/OpZqfGXVB5U) Soham Joshi, Abhishek Deshpande, Varad Deshmukh, Shrirang Karandikar
-- [The View from Above: Getting Started with Satellite Images] (https://youtu.be/u5Pbiu0X_Cs) Siddharth Srivastava, Yash Damania, Yash Chaudhari, Shrirang Karandikar
+- [Understanding UMAP: The Internal Workings of a State of the Art Clustering Algorithm](https://youtu.be/OpZqfGXVB5U) Soham Joshi, Abhishek Deshpande, Varad Deshmukh, Shrirang Karandikar
+- [The View from Above: Getting Started with Satellite Images](https://youtu.be/u5Pbiu0X_Cs) Siddharth Srivastava, Yash Damania, Yash Chaudhari, Shrirang Karandikar
 
 ## Interested in Writing?
 - [Exploring the Unseen](http://exploringtheunseen.algoasylum.com/)

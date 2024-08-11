@@ -7,7 +7,7 @@ A few links to get you started:
 
 ## Projects
 - Check out our [github](https://github.com/algoasylum)
-- Projects [2018-19](projects2018-19.md) [2019-20](projects2019-20.md) [2020-21](projects2020-21.md) [2021-22](projects2021-22.md) [2022-23](projects2022-23.md) [2023-24](projects2023-24.md) [2024-25](projects2024-25.md)
+- Projects [2018-19](projects2018-19.md) [2019-20](projects2019-20.md) [2020-21](projects2020-21.md) [2021-22](projects2021-22.md) [2023-24](projects2023-24.md) [2024-25](projects2024-25.md)
 - [PyEyeTrack](https://pyeyetrack.algoasylum.com/) - The Python eYe Tracking Library. [Released to PyPi](https://pypi.org/project/PyEyeTrack/)
 
 ## Articles

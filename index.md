@@ -15,7 +15,6 @@ A few links to get you started:
 - The Seen and the Unseen of Programming, Shweta Barge, Shrirang Karandikar: [Part 1](https://medium.com/algoasylum/the-seen-and-the-unseen-7de862e97c4c), [2](https://medium.com/algoasylum/the-seen-and-the-unseen-7de862e97c4c), [3](https://medium.com/algoasylum/the-seen-and-the-unseen-part-3-7165b265dc82), [4](https://medium.com/algoasylum/the-seen-and-the-unseen-7de862e97c4c)
 - The Simplest Math Problem We Still Can't Solve, Jacob DeNelsky, Shrirang Karandikar: [Part 1](https://medium.com/algoasylum/the-simplest-math-problem-we-still-cant-solve-part-1-61cd767d33dc), [2](https://medium.com/algoasylum/the-simplest-math-problem-we-still-cant-solve-part-2-e5b1203bc85d), [3](https://medium.com/algoasylum/the-simplest-math-problem-we-still-cant-solve-part-3-1f23d71dcc3c)
 
-
 ## Talks
 ### PyCon India 2020
 - [Understanding UMAP: The Internal Workings of a State of the Art Clustering Algorithm](https://youtu.be/OpZqfGXVB5U) Soham Joshi, Abhishek Deshpande, Varad Deshmukh, Shrirang Karandikar
@@ -24,6 +23,8 @@ A few links to get you started:
 - Modeling Pandemics, Soham Joshi, Abhishek Deshpande, Varad Deshmukh, Shrirang Karandikar
 ### Intel OneAPI Dev Summit APJ, 2021
 - [Reskilling of Developers for HPC and AI](https://www.oneapi.io/event-sessions/panel-discussion-reskilling-of-developers-for-hpc-ai/), Panel Discussion
+### 31st IEEE International Conference on High Performance Computing, Data, & Analytics (HiPC), 2024
+- Performance = Implementation + Hardware + Input Data, with application to SpMV; Khushboo Chaudhari, Shrirang Karandikar, Sneha Thombre
 
 ## Interested in Writing?
 - [Exploring the Unseen](http://exploringtheunseen.algoasylum.com/)

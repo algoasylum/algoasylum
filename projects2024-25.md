@@ -1,5 +1,7 @@
 Matrix Optimizations, or Moxie, [Khushboo Choudhari]()
 
+Focused on optimizing SpMV (Sparse Matrix Vector Multiplication) operations by introducing a new vector arrangement technique and leveraging the vector units, resulting in a 30.29% boost in performance, along with a theoretical analytical model to analyze various matrix configurations. Additionally, worked on optimizing the EM (Expectation Maximization) process using the vector units. Paper published at the 2024 International IEEE HiPC (High Performance Computing) conference in Bangalore.
+
 ---
 
 Autoencoder Exploration, or OX, [Sanchi Jadhav]()

@@ -1,3 +1,9 @@
+<header>
+Privacy Policy
+</header>
+
+### Privacy Policy ###
+
 This app does not collect any user or personal data
 
 It does not save anything

@@ -27,7 +27,7 @@ A few links to get you started:
 - Performance = Implementation + Hardware + Input Data, with application to SpMV; Khushboo Chaudhari, Shrirang Karandikar, Sneha Thombre
 
 ## Interested in Writing?
-- [Exploring the Unseen](http://exploringtheunseen.algoasylum.com/)
+- [Exploring the Unseen](http://exploringtheunseen.github.io/)
 
 
 Shrirang's [home page](https://shrirang.karandikar.org), [LinkedIn](https://www.linkedin.com/in/shrirang-karandikar-17298a25/)

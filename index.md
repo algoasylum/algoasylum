@@ -3,7 +3,52 @@
 A few links to get you started:
 -->
 
+<script type="module">
+    import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
 
+    // 1. Grab the professor's ID from the URL parameter (e.g., algoasylum.com/day1.html?user=ProfSmith)
+    const urlParams = new URLSearchParams(window.location.search);
+    const facultyId = urlParams.get('user') || 'Anonymous_Faculty';
+
+    // 2. Initialize Chandra
+    Chatbot.init({
+        chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
+        apiHost: "http://34.60.62.198:3000",
+        chatflowConfig: {
+            sessionId: facultyId // This beams the specific user ID directly to LangSmith!
+        },
+        theme: {
+            button: {
+                backgroundColor: "#3B81F6",
+                right: 20,
+                bottom: 20,
+                size: 48,
+                dragAndDrop: true
+            },
+            chatWindow: {
+                welcomeMessage: "Hello! I am Chandra, your Socratic Tutor. I'm ready when you are to begin the module.",
+                backgroundColor: "#ffffff",
+                height: 700,
+                width: 400,
+                fontSize: 16,
+                botMessage: {
+                    backgroundColor: "#f7f8ff",
+                    textColor: "#303235",
+                },
+                userMessage: {
+                    backgroundColor: "#3B81F6",
+                    textColor: "#ffffff",
+                },
+                textInput: {
+                    placeholder: "Type your answer here...",
+                    backgroundColor: "#ffffff",
+                    textColor: "#303235",
+                    sendButtonColor: "#3B81F6",
+                }
+            }
+        }
+    })
+</script>
 
 ## Projects
 - Check out our [github](https://github.com/algoasylum)

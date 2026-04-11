@@ -3,31 +3,6 @@
 A few links to get you started:
 -->
 
-
-{% raw %}
-<div style="position: relative; z-index: 2147483647;">
-<script type="module">
-    console.log("🚦 [Chandra Debug] Script running inside raw block.");
-    
-    import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js";
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const facultyId = urlParams.get('user') || 'Anonymous_Faculty';
-
-    Chatbot.init({
-        chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
-        apiHost: "http://34.60.62.198:3000",
-        chatflowConfig: {
-            sessionId: facultyId
-        },
-        theme: {
-            button: { backgroundColor: "#3B81F6", right: 20, bottom: 20, size: 48, dragAndDrop: true }
-        }
-    });
-</script>
-</div>
-{% endraw %}
-
 ## Projects
 - Check out our [github](https://github.com/algoasylum)
 - Projects [2018-19](projects2018-19.md) [2019-20](projects2019-20.md) [2020-21](projects2020-21.md) [2021-22](projects2021-22.md) [2023-24](projects2023-24.md) [2024-25](projects2024-25.md)

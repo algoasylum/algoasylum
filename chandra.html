@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoAsylum | Chandra Tutor</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
+        .container { text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Chandra: Socratic Tutor</h1>
+        <p>Welcome to the Quantum Computation training module.</p>
+        <p><strong>Click the blue chat bubble in the bottom right to begin.</strong></p>
+    </div>
+
+    <script type="module">
+        import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const facultyId = urlParams.get('user') || 'Anonymous_Faculty';
+
+        Chatbot.init({
+            chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
+            apiHost: "http://34.60.62.198:3000"
+            chatflowConfig: {
+                sessionId: facultyId
+            },
+            theme: {
+                button: {
+                    backgroundColor: "#3B81F6",
+                    right: 30,
+                    bottom: 30,
+                    size: 60,
+                }
+            }
+        })
+    </script>
+</body>
+</html>

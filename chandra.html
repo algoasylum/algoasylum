@@ -30,11 +30,15 @@
 
         // Function to start Chandra once authenticated
         function startChandra(userEmail) {
-            console.log("Initializing Chandra for:", userEmail);
-            
-            // 1. Create the full chatbot element
+            // 1. Wipe any existing chatbot elements to prevent cached config
+            const existing = document.querySelector("flowise-fullchatbot");
+            if (existing) existing.remove();
+
+            // 2. Add fresh element
             const chatbotElement = document.createElement("flowise-fullchatbot");
             document.body.appendChild(chatbotElement);
+          
+            console.log("Initializing Chandra for:", userEmail);
 
             // 2. Initialize with Metadata Overrides
             Chatbot.initFull({

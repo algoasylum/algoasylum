@@ -44,16 +44,14 @@
                     sessionId: userEmail,
                 },
                 overrideConfig: {
-                    // This section sends the ID specifically to LangSmith
+                    vars: {
+                        userId: userEmail
+                    },
+                    // Keep this as a backup for the built-in analytics toggle
                     analytics: {
                         langSmith: {
                             userId: userEmail
                         }
-                    },
-                    // This section adds general metadata to the Flowise lead
-                    metadata: {
-                        email: userEmail,
-                        user: userEmail
                     }
                 },
                 theme: {

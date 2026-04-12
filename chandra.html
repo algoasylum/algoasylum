@@ -45,14 +45,9 @@
                 },
                 overrideConfig: {
                     sessionId: userEmail,
-                    metadata: {  
+                    vars: {
                         userId: userEmail,
-                        email: userEmail
-                    },
-                    analytics: {
-                        langSmith: {
-                            userId: userEmail
-                        }
+                        userEmail: userEmail
                     }
                 },
                 theme: {

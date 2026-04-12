@@ -16,7 +16,7 @@
     // 1. This function launches Chandra after a successful login
     function startChandra(userEmail) {
         Chatbot.initFull({
-            chatflowid: "YOUR_CHATFLOW_ID",
+            chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
             apiHost: "https://chandra.algoasylum.com",
             chatflowConfig: {
                 sessionId: userEmail // Uses their Google email for LangSmith tracking
@@ -56,7 +56,7 @@
     // 3. Initialize the Google Identity button on load
     window.onload = () => {
         google.accounts.id.initialize({
-            client_id: "YOUR_CLIENT_ID_HERE.apps.googleusercontent.com",
+            client_id: "878323377653-ttsnclul66mnclgd7gcs0in86ghm2o2o.apps.googleusercontent.com",
             callback: window.handleCredentialResponse
         });
         

@@ -30,30 +30,38 @@
 
         // Function to start Chandra once authenticated
         function startChandra(userEmail) {
-    // Create the element dynamically so it doesn't try to load localhost first
-    const chatbotElement = document.createElement("flowise-fullchatbot");
-    document.body.appendChild(chatbotElement);
+        // Create the element dynamically so it doesn't try to load localhost first
+            const chatbotElement = document.createElement("flowise-fullchatbot");
+            document.body.appendChild(chatbotElement);
 
-    Chatbot.initFull({
-        chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
-        apiHost: "https://chandra.algoasylum.com",
-        chatflowConfig: {
-            sessionId: userEmail,
-            metadata: {
-                user: userEmail
-            }
-        },
-        theme: {
-            chatWindow: {
-                showTitle: true,
-                title: `Chandra (User: ${userEmail})`,
-                height: "100%",
-                width: "100%",
-                fontSize: 18
-            }
+
+            
+            Chatbot.initFull({
+                chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
+                apiHost: "https://chandra.algoasylum.com",
+                chatflowConfig: {
+                    sessionId: userEmail,
+                    vars: {
+                        customerName: userEmail
+                    }      
+                },
+                overrideConfig: {
+                metadata: {
+                    user_email: userEmail,
+                    project: "Chandra-Tutor"
+                    }
+                },
+                theme: {
+                    chatWindow: {
+                        showTitle: true,
+                        title: `Chandra (User: ${userEmail})`,
+                        height: "100%",
+                        width: "100%",
+                        fontSize: 18
+                    }
+                }
+            });
         }
-    });
-}
 
 
         // Callback function for Google Sign-In

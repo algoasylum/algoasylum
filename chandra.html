@@ -46,6 +46,7 @@
                 apiHost: "https://chandra.algoasylum.com",
                 chatflowConfig: {
                     sessionId: userEmail,
+                    systemMessagePrompt: "[STUDENT IDENTITY: " + userEmail + "]\n\n" + socraticPrompt
                     // The library maps everything inside here to the backend's overrideConfig
                     vars: {
                         userId: userEmail

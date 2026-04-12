@@ -38,20 +38,15 @@
 
             // 2. Initialize with Metadata Overrides
             Chatbot.initFull({
-                chatflowid: "a5b6893d-9fa2-48c4-a0e1-702b6ccafa0f", 
+                chatflowid: "3d1826ee-a1bb-4259-aa6a-a0fd44e0cd32", 
                 apiHost: "https://chandra.algoasylum.com",
                 chatflowConfig: {
                     sessionId: userEmail,
                 },
                 overrideConfig: {
-                    vars: {
+                    sessionId: userEmail,
+                    metadata: {
                         userId: userEmail
-                    },
-                    // Keep this as a backup for the built-in analytics toggle
-                    analytics: {
-                        langSmith: {
-                            userId: userEmail
-                        }
                     }
                 },
                 theme: {

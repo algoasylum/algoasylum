@@ -46,14 +46,19 @@
                 apiHost: "https://chandra.algoasylum.com",
                 chatflowConfig: {
                     sessionId: userEmail,
-                },
-                overrideConfig: {
-                    sessionId: userEmail,
+                    // The library maps everything inside here to the backend's overrideConfig
                     vars: {
-                        userId: userEmail,
-                        userEmail: userEmail
+                        userId: userEmail
+                    },
+                    analytics: {
+                        langSmith: {
+                            userId: userEmail
+                        }
+                    },
+                    metadata: {
+                        userId: userEmail
                     }
-                },
+                },              
                 theme: {
                     chatWindow: {
                         showTitle: true,

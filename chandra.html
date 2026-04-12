@@ -38,7 +38,10 @@
         chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
         apiHost: "https://chandra.algoasylum.com",
         chatflowConfig: {
-            sessionId: userEmail 
+            sessionId: userEmail,
+            metadata: {
+                user: userEmail
+            }
         },
         theme: {
             chatWindow: {

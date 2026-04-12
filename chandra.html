@@ -23,8 +23,6 @@
         <div id="google-button"></div>
     </div>
 
-    <flowise-fullchatbot></flowise-fullchatbot>
-
     <script src="https://accounts.google.com/gsi/client"></script>
 
     <script type="module">
@@ -32,23 +30,28 @@
 
         // Function to start Chandra once authenticated
         function startChandra(userEmail) {
-            Chatbot.initFull({
-                chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
-                apiHost: "https://chandra.algoasylum.com",
-                chatflowConfig: {
-                    sessionId: userEmail 
-                },
-                theme: {
-                    chatWindow: {
-                        showTitle: true,
-                        title: `Chandra (User: ${userEmail})`,
-                        height: "100%",
-                        width: "100%",
-                        fontSize: 18
-                    }
-                }
-            });
+    // Create the element dynamically so it doesn't try to load localhost first
+    const chatbotElement = document.createElement("flowise-fullchatbot");
+    document.body.appendChild(chatbotElement);
+
+    Chatbot.initFull({
+        chatflowid: "73acd5ad-4dc6-4311-b74c-3b842cc45a22",
+        apiHost: "https://chandra.algoasylum.com",
+        chatflowConfig: {
+            sessionId: userEmail 
+        },
+        theme: {
+            chatWindow: {
+                showTitle: true,
+                title: `Chandra (User: ${userEmail})`,
+                height: "100%",
+                width: "100%",
+                fontSize: 18
+            }
         }
+    });
+}
+
 
         // Callback function for Google Sign-In
         window.handleCredentialResponse = (response) => {

@@ -46,9 +46,14 @@
                     }      
                 },
                 overrideConfig: {
-                metadata: {
-                    user_email: userEmail,
-                    project: "Chandra-Tutor"
+                    analytics: {
+                        langSmith: {
+                            userId: userEmail,
+                                metadata: {
+                                user: userEmail,
+                                email: userEmail
+                            }
+                        }
                     }
                 },
                 theme: {

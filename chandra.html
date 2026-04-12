@@ -54,17 +54,27 @@
     };
 
     // 3. Initialize the Google Identity button on load
-    window.onload = () => {
-        google.accounts.id.initialize({
-            client_id: "878323377653-ttsnclul66mnclgd7gcs0in86ghm2o2o.apps.googleusercontent.com",
-            callback: window.handleCredentialResponse
-        });
-        
-        google.accounts.id.renderButton(
-            document.getElementById("google-button"),
-            { theme: "outline", size: "large", text: "signin_with" }
-        );
+
+    // Initialize the Google Identity button
+window.onload = () => {
+    const initGoogle = () => {
+        if (typeof google !== 'undefined') {
+            google.accounts.id.initialize({
+                client_id: "878323377653-ttsnclul66mnclgd7gcs0in86ghm2o2o.apps.googleusercontent.com",
+                callback: window.handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("google-button"),
+                { theme: "outline", size: "large", text: "signin_with" }
+            );
+        } else {
+            // If the library isn't ready yet, wait 100ms and try again
+            setTimeout(initGoogle, 100);
+        }
     };
+    initGoogle();
+};
+
 </script>
 </body>
 </html>

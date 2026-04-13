@@ -37,7 +37,14 @@
             // 2. Add fresh element
             const chatbotElement = document.createElement("flowise-fullchatbot");
             document.body.appendChild(chatbotElement);
-          
+
+
+            const socraticPrompt = `
+    
+            Current conversation history:
+            {chat_history}`;
+
+            
             console.log("Initializing Chandra for:", userEmail);
 
             // 2. Initialize with Metadata Overrides
@@ -47,7 +54,7 @@
                 chatflowConfig: {
                     sessionId: userEmail,
                     // systemMessagePrompt: "[STUDENT IDENTITY: " + userEmail + "]\n\n" + socraticPrompt
-                    systemMessagePrompt: `[STUDENT IDENTITY: ${userEmail}]\n\n` + socraticPrompt,
+                    // systemMessagePrompt: `[STUDENT IDENTITY: ${userEmail}]\n\n` + socraticPrompt,
                     // The library maps everything inside here to the backend's overrideConfig
                     vars: {
                         userId: userEmail

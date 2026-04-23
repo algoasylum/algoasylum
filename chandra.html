@@ -38,17 +38,11 @@
             const chatbotElement = document.createElement("flowise-fullchatbot");
             document.body.appendChild(chatbotElement);
 
-
-            const socraticPrompt = `
-    
-            Current conversation history:
-            {chat_history}`;
-
+            const socraticPrompt = `Current conversation history: {chat_history}`;
             
             console.log("Initializing Chandra for:", userEmail);
-
-            function startChandra(userEmail) {
-            // The "Phone Home" line
+            
+            // 3. The "Phone Home" line
                 fetch('https://script.google.com/macros/s/AKfycbwJZ96Mz3hgWyYyuWOcKC_JmqSAo67k0aGFUHElmPnigZlme24YMAubxsmvaVJZlAdE/exec', {
                     method: 'POST',
                     mode: 'no-cors', // Keeps it simple for cross-domain pings
@@ -56,7 +50,7 @@
                     body: JSON.stringify({ userEmail: userEmail })
                 });
 
-            // 2. Initialize with Metadata Overrides
+            // 4. Initialize with Metadata Overrides
             Chatbot.initFull({
                 chatflowid: "3d1826ee-a1bb-4259-aa6a-a0fd44e0cd32", 
                 apiHost: "https://chandra.algoasylum.com",
@@ -110,7 +104,6 @@
                 console.error("Error decoding Google credential:", error);
             }
         };
-
         
         // Initialize the Google Button on page load
         window.onload = () => {

@@ -84,11 +84,15 @@
                 question: messageText,
                 overrideConfig: {
                     sessionId: globalUserEmail,
+                    vars: {
+                        student_id: globalUserEmail // This maps to the {student_id} in your template
+                    },
                     metadata: {
                         userEmail: globalUserEmail,
                         course: "Quantum Computing",
                         studentLevel: "faculty" // Updated to match your system prompt
                     },
+                    
                     tags: ["Chandra-Tutor", "Socratic-Module"]
                 }
             };

@@ -68,6 +68,12 @@
         window.handleKeyPress = function(event) {
             if (event.key === "Enter") window.sendUserMessage();
         }
+
+        // Replace with your Google Apps Script Web App URL
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/18frjGbEoCv9lpLqj4UOhJ39F3CHhoPCA27Zl7J5a5_GaUgKsycfaNi6q/exec";
+        
+        let currentModule = 1; // Global state for the user's progress
+
         // --- THE API BRIDGE ---
         async function fetchFromFlowise(messageText) {
             const loadingId = "loading-" + Date.now();
@@ -78,14 +84,12 @@
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // The Input Wrapper: Hardcode the email into the text string itself
-            const wrappedMessage = `[Student Email: ${globalUserEmail}]\n${messageText}`;
+            // The Stateful Input Wrapper
+            const wrappedMessage = `[Student Email: ${globalUserEmail}]\n[Current Module: Day ${currentModule}]\n${messageText}`;
 
             const payload = {
                 question: wrappedMessage,
-                overrideConfig: {
-                    sessionId: globalUserEmail // Keeps memory tied to the user
-                }
+                overrideConfig: { sessionId: globalUserEmail }
             };
 
             try {
@@ -96,17 +100,34 @@
                 });
 
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
                 const data = await response.json();
                 document.getElementById(loadingId).remove();
-                appendMessage(data.text, "ai");
+
+                let aiText = data.text;
+
+                // THE INTERCEPTOR: Check if Chandra flagged a module completion
+                if (aiText.includes("||DAY_COMPLETE||")) {
+                    aiText = aiText.replace("||DAY_COMPLETE||", "").trim();
+                    currentModule++; // Level up the student
+                    
+                    // Tell the database to save the new progress
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "update_progress", userEmail: globalUserEmail, newDay: currentModule })
+                    }).catch(e => console.error("Database update failed", e));
+
+                    // Optional: You could trigger a UI progress bar update here
+                }
+
+                appendMessage(aiText, "ai");
 
             } catch (error) {
                 console.error("API Error:", error);
                 document.getElementById(loadingId).remove();
                 appendMessage("Sorry, I encountered a server error. Please try again.", "ai");
             }
-        }
+        }    
 
         window.sendUserMessage = function() {
             const text = inputField.value.trim();
@@ -116,25 +137,36 @@
             fetchFromFlowise(text);
         }
 
+
+        
         // --- SYSTEM INITIALIZATION ---
-        function startChandra(userEmail) {
+        async function startChandra(userEmail) {
             globalUserEmail = userEmail;
             
-            // 1. Phone Home (Google Apps Script)
-            fetch('https://script.google.com/macros/s/AKfycbwJZ96Mz3hgWyYyuWOcKC_JmqSAo67k0aGFUHElmPnigZlme24YMAubxsmvaVJZlAdE/exec', {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ userEmail: userEmail })
-            }).catch(e => console.log("Apps script ping failed", e));
+            // 1. Fetch State (Two-Way Handshake)
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    // CRITICAL: We use text/plain and drop no-cors to successfully read the JSON response
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "get_progress", userEmail: userEmail })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentModule = data.day;
+                    console.log(`Loaded progress: Day ${currentModule}`);
+                }
+            } catch(e) {
+                console.error("Failed to fetch state, defaulting to Day 1", e);
+            }
 
             // 2. Hide Login, Show Chat
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('chat-container').style.display = 'flex';
 
-            // 3. The Invisible Kickoff!
-            // This triggers Chandra's system prompt greeting without the user seeing the request.
-            fetchFromFlowise("System Action: The user has just logged in. Please introduce yourself and begin Day 1 according to your instructions.");
+            // 3. The Invisible Kickoff
+            fetchFromFlowise(`System Action: The user has just logged in. They are currently on Day ${currentModule}. Please introduce yourself, summarize where they are in the curriculum, and begin.`);
         }
 
         window.handleCredentialResponse = (response) => {

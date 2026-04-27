@@ -68,7 +68,6 @@
         window.handleKeyPress = function(event) {
             if (event.key === "Enter") window.sendUserMessage();
         }
-
         // --- THE API BRIDGE ---
         async function fetchFromFlowise(messageText) {
             const loadingId = "loading-" + Date.now();
@@ -79,21 +78,13 @@
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Identity Injection (Stage 4) happens right here
+            // The Input Wrapper: Hardcode the email into the text string itself
+            const wrappedMessage = `[Student Email: ${globalUserEmail}]\n${messageText}`;
+
             const payload = {
-                question: messageText,
+                question: wrappedMessage,
                 overrideConfig: {
-                    sessionId: globalUserEmail,
-                    vars: {
-                        student_id: globalUserEmail // This maps to the {student_id} in your template
-                    },
-                    metadata: {
-                        userEmail: globalUserEmail,
-                        course: "Quantum Computing",
-                        studentLevel: "faculty" // Updated to match your system prompt
-                    },
-                    
-                    tags: ["Chandra-Tutor", "Socratic-Module"]
+                    sessionId: globalUserEmail // Keeps memory tied to the user
                 }
             };
 

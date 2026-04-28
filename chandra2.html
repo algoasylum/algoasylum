@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AlgoAsylum | Faculty Portal</title>
     <link rel="icon" type="image/png" href="https://www.algoasylum.com/algoasylum.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <style>
         body, html { margin: 0; padding: 0; height: 100vh; width: 100%; overflow: hidden; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
@@ -20,9 +23,20 @@
         #chat-container { display: none; width: 100%; max-width: 800px; margin: 40px auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); flex-direction: column; height: 85vh; }
         #chat-header { background: #1e293b; color: white; padding: 16px; text-align: center; font-weight: bold; border-radius: 8px 8px 0 0; }
         #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        
+        /* Message Bubbles */
         .message { padding: 12px 16px; border-radius: 8px; max-width: 85%; line-height: 1.5; }
         .user-msg { background: #007bff; color: white; align-self: flex-end; }
         .ai-msg { background: #f1f5f9; color: #1e293b; align-self: flex-start; border: 1px solid #e2e8f0; }
+        
+        /* Markdown formatting fixes inside the bubble */
+        .ai-msg p { margin-top: 0; margin-bottom: 10px; }
+        .ai-msg p:last-child { margin-bottom: 0; }
+        .ai-msg pre { background: #1e293b; color: white; padding: 10px; border-radius: 6px; overflow-x: auto; }
+        .ai-msg code { font-family: monospace; background: #e2e8f0; padding: 2px 4px; border-radius: 4px; }
+        .ai-msg pre code { background: none; padding: 0; }
+
+        /* Input Area */
         #input-area { display: flex; padding: 16px; border-top: 1px solid #e2e8f0; background: #fafafa; border-radius: 0 0 8px 8px; }
         #user-input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; }
         #send-btn { background: #1e293b; color: white; border: none; padding: 12px 20px; margin-left: 12px; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
@@ -39,7 +53,8 @@
 
     <div id="chat-container">
         <div id="chat-header">Chandra - Socratic Quantum Tutor</div>
-        <div id="chat-box"></div> <div id="input-area">
+        <div id="chat-box"></div> 
+        <div id="input-area">
             <input type="text" id="user-input" placeholder="Type your response..." onkeypress="handleKeyPress(event)">
             <button id="send-btn" onclick="sendUserMessage()">Send</button>
         </div>
@@ -48,10 +63,16 @@
     <script src="https://accounts.google.com/gsi/client"></script>
 
     <script type="module">
-        // Replace with your actual Flowise API endpoint ID
-        const FLOWISE_API_URL = "https://chandra.algoasylum.com/api/v1/prediction/a958574c-7abd-4e2d-b95b-bf7f11e57f63";
+        // 1. The Secure Python Proxy (For all Chat traffic)
+        const PROXY_URL = "https://chandra.algoasylum.com/api/chat";
         
-        let globalUserEmail = ""; // Stores the OAuth email for all fetch calls
+        // 2. The Google Apps Script Database (For state tracking only)
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJZ96Mz3hgWyYyuWOcKC_JmqSAo67k0aGFUHElmPnigZlme24YMAubxsmvaVJZlAdE/exec";
+        
+        let globalUserEmail = ""; 
+        let currentDay = 1;
+        let currentConcept = 1;
+
         const chatBox = document.getElementById("chat-box");
         const inputField = document.getElementById("user-input");
 
@@ -59,8 +80,13 @@
         function appendMessage(text, sender) {
             const msgDiv = document.createElement("div");
             msgDiv.className = `message ${sender === 'user' ? 'user-msg' : 'ai-msg'}`;
-            // Simple replacement to handle basic line breaks in LLM output
-            msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+            
+            if (sender === 'user') {
+                msgDiv.innerText = text; // Plain text for user
+            } else {
+                msgDiv.innerHTML = marked.parse(text); // Markdown for AI
+            }
+            
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -69,10 +95,7 @@
             if (event.key === "Enter") window.sendUserMessage();
         }
 
-        // Google Apps Script Web App URL
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJZ96Mz3hgWyYyuWOcKC_JmqSAo67k0aGFUHElmPnigZlme24YMAubxsmvaVJZlAdE/exec";
-        
-        // --- THE SECURE API BRIDGE ---
+        // --- THE API BRIDGE ---
         async function fetchFromBackend(messageText) {
             const loadingId = "loading-" + Date.now();
             const loadingDiv = document.createElement("div");
@@ -83,14 +106,15 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // We send ONLY the user's raw text to Google Apps Script
-                const response = await fetch(APPS_SCRIPT_URL, {
+                // Route 1: Send the chat to the Python Proxy
+                const response = await fetch(PROXY_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        action: "chat", 
-                        userEmail: globalUserEmail, 
-                        message: messageText 
+                        email: globalUserEmail, 
+                        message: messageText,
+                        day: currentDay,
+                        concept: currentConcept
                     })
                 });
 
@@ -98,15 +122,38 @@
                 document.getElementById(loadingId).remove();
                 
                 if (data.success) {
-                    appendMessage(data.text, "ai");
+                    let aiText = data.text;
+
+                    // GRADUATION LOGIC: Check if the AI output the secret completion flag
+                    if (aiText.includes("||CONCEPT_COMPLETE||")) {
+                        // 1. Clean the text so the user doesn't see the flag
+                        aiText = aiText.replace("||CONCEPT_COMPLETE||", "").trim();
+                        
+                        // 2. Increment local state
+                        currentConcept++;
+                        
+                        // 3. Route 2: Fire-and-forget update to Google Sheets Database
+                        fetch(APPS_SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ 
+                                action: "update_progress", 
+                                userEmail: globalUserEmail, 
+                                day: currentDay, 
+                                concept: currentConcept 
+                            })
+                        }).catch(e => console.error("Database update failed:", e));
+                    }
+
+                    appendMessage(aiText, "ai");
                 } else {
-                    throw new Error(data.error);
+                    throw new Error(data.error || "Unknown proxy error");
                 }
 
             } catch (error) {
                 console.error("API Error:", error);
-                document.getElementById(loadingId).remove();
-                appendMessage("Sorry, I encountered a server error. Please try again.", "ai");
+                document.getElementById(loadingId)?.remove();
+                appendMessage("Sorry, I encountered a server connection error. Please try again.", "ai");
             }
         }
 
@@ -115,14 +162,14 @@
             if (!text) return;
             appendMessage(text, "user");
             inputField.value = "";
-            fetchFromBackend(text); // Route through Google instead of Flowise
+            fetchFromBackend(text); 
         }
 
         // --- SYSTEM INITIALIZATION ---
         async function startChandra(userEmail) {
             globalUserEmail = userEmail;
             
-            // 1. Fetch State
+            // 1. Fetch State from Google Sheets
             try {
                 const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
@@ -131,16 +178,20 @@
                 });
 
                 const data = await response.json();
-                console.log(`Loaded progress: Day ${data.day}, Concept ${data.concept}`);
+                if (data.success) {
+                    currentDay = data.day || 1;
+                    currentConcept = data.concept || 1;
+                    console.log(`Loaded progress: Day ${currentDay}, Concept ${currentConcept}`);
+                }
             } catch(e) {
-                console.error("Failed to load state", e);
+                console.error("Failed to load state from database", e);
             }
 
             // 2. Hide Login, Show Chat
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('chat-container').style.display = 'flex';
 
-            // 3. The Invisible Kickoff
+            // 3. The Invisible Kickoff to Python Proxy
             fetchFromBackend("System Action: The user has just logged in. Please introduce yourself, state the goal for the current concept, remind them of the available commands, and ask your first guiding question.");
         }
 

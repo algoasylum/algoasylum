@@ -171,6 +171,25 @@
                             })
                         }).catch(e => console.error("Database update failed:", e));
                     }
+                    if (aiText.includes("||RESET_PROGRESS||")) {
+                        // Strip the secret tag before the user sees it
+                        aiText = aiText.replace("||RESET_PROGRESS||", "").trim();
+    
+                        // Reset the local state to Day 1, Concept 1
+                        currentDay = 1;
+                        currentConcept = 1;
+    
+                        // Ping Google Apps Script to overwrite the DB (Fire & Forget)
+                        fetch(APPS_SCRIPT_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'update_progress',
+                                userEmail: globalUserEmail,
+                                day: currentDay,
+                                concept: currentConcept
+                            })
+                        }).catch(err => console.error("Failed to sync reset to DB:", err));
+                    }
 
                     appendMessage(aiText, "ai");
                 } else {

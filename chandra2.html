@@ -133,6 +133,11 @@
             
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Tell MathJax to scan the new message for LaTeX
+            if (sender === 'ai' && window.MathJax) {
+                window.MathJax.typesetPromise([msgDiv]).catch((err) => console.log('MathJax error:', err));
+            }
         }
 
         window.handleKeyPress = function(event) {

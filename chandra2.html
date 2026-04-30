@@ -5,8 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AlgoAsylum | Faculty Portal</title>
     <link rel="icon" type="image/png" href="https://www.algoasylum.com/algoasylum.png">
+
+    <!-- 1. Configure MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+
+    <!-- 2. Load MathJax (v3 is much faster than v2) -->
+    <script id="MathJax-script" async 
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     
     <style>
         body, html { margin: 0; padding: 0; height: 100vh; width: 100%; overflow: hidden; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }

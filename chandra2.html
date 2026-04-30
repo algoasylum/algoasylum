@@ -238,7 +238,7 @@
             document.getElementById('chat-container').style.display = 'flex';
 
             // 3. The Invisible Kickoff to Python Proxy
-            fetchFromBackend("System Action: The user has just logged in. Please introduce yourself, state the goal for the current concept, remind them of the available commands, and ask your first guiding question.");
+            await fetchFromBackend("System Action: The user has just logged in. Please introduce yourself, state the goal for the current concept, remind them of the available commands, and ask your first guiding question.");
         }
 
         window.handleCredentialResponse = (response) => {

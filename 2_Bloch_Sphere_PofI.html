@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Bloch Sphere with Amplitudes</title>
+    
+    <!-- Load Plotly for 3D visualization -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Load MathJax for flawless LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+        #math-display {
+            font-size: 1.5em;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        .amplitude-box {
+            background-color: #e8f4f8;
+            border: 2px solid #b8daff;
+            border-radius: 8px;
+            padding: 15px 25px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            display: flex;
+            gap: 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .amp-val {
+            font-family: "Courier New", Courier, monospace;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 480px;
+            text-align: center;
+            z-index: 10;
+        }
+        .slider-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        input[type=range] {
+            width: 250px;
+            cursor: pointer;
+        }
+        .val-display {
+            width: 60px;
+            font-weight: bold;
+            color: #0056b3;
+            text-align: right;
+        }
+        .presets {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .presets button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .presets button:hover {
+            background-color: #e0e0e0;
+            border-color: #999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Mathematical Equation Display -->
+    <div id="math-display">
+        <!-- LaTeX will be injected here -->
+    </div>
+
+    <!-- Amplitudes Display -->
+    <div class="amplitude-box">
+        <div><b>α (Real):</b> <span class="amp-val" id="alpha-val">0.707</span></div>
+        <div><b>β (Complex):</b> <span class="amp-val" id="beta-val">0.707 + 0.000i</span></div>
+    </div>
+
+    <!-- UI Controls -->
+    <div class="controls">
+        <!-- Preset Buttons -->
+        <div class="presets">
+            <button onclick="setPreset(0, 0)" title="North Pole">|0⟩</button>
+            <button onclick="setPreset(12, 0)" title="South Pole">|1⟩</button>
+            <button onclick="setPreset(6, 0)" title="Positive X">|+⟩</button>
+            <button onclick="setPreset(6, 12)" title="Negative X">|−⟩</button>
+            <button onclick="setPreset(6, 6)" title="Positive Y">|i⟩</button>
+            <button onclick="setPreset(6, 18)" title="Negative Y">|−i⟩</button>
+        </div>
+
+        <!-- Sliders -->
+        <div class="slider-row">
+            <label><b>θ</b> (Probability):</label>
+            <input type="range" id="theta-slider" min="0" max="12" step="1" value="6">
+            <span class="val-display" id="theta-val">π/2</span>
+        </div>
+        <div class="slider-row">
+            <label><b>φ</b> (Relative Phase):</label>
+            <input type="range" id="phi-slider" min="0" max="24" step="1" value="0">
+            <span class="val-display" id="phi-val">0</span>
+        </div>
+    </div>
+
+    <!-- 3D Plot Container -->
+    <div id="plot" style="width: 700px; height: 600px;"></div>
+
+    <script>
+        // Helper function to format fractions of Pi cleanly
+        function getPiFraction(numerator, denominator) {
+            if (numerator === 0) return "0";
+            
+            let a = numerator, b = denominator;
+            while (b !== 0) { let t = b; b = a % b; a = t; }
+            let gcd = a;
+            
+            let n = numerator / gcd;
+            let d = denominator / gcd;
+            
+            if (n === 1 && d === 1) return "\\pi";
+            if (d === 1) return `${n}\\pi`;
+            if (n === 1) return `\\frac{\\pi}{${d}}`;
+            return `\\frac{${n}\\pi}{${d}}`;
+        }
+
+        // Generate the static wireframe sphere
+        function generateSphere() {
+            let u = [], v = [], x = [], y = [], z = [];
+            for (let i = 0; i <= 40; i++) u.push((i * 2 * Math.PI) / 40);
+            for (let i = 0; i <= 20; i++) v.push((i * Math.PI) / 20);
+            
+            for (let i = 0; i < u.length; i++) {
+                x[i] = []; y[i] = []; z[i] = [];
+                for (let j = 0; j < v.length; j++) {
+                    x[i][j] = Math.cos(u[i]) * Math.sin(v[j]);
+                    y[i][j] = Math.sin(u[i]) * Math.sin(v[j]);
+                    z[i][j] = Math.cos(v[j]);
+                }
+            }
+            return { x, y, z };
+        }
+
+        const sphereData = generateSphere();
+        const axisStyle = { color: '#aaaaaa', width: 2 };
+
+        // Initial vector state
+        let initX = Math.sin(Math.PI/2) * Math.cos(0);
+        let initY = Math.sin(Math.PI/2) * Math.sin(0);
+        let initZ = Math.cos(Math.PI/2);
+
+        let data = [
+            {
+                type: 'surface',
+                x: sphereData.x, y: sphereData.y, z: sphereData.z,
+                opacity: 0.1, showscale: false, hoverinfo: 'skip', colorscale: 'Greys'
+            },
+            { type: 'scatter3d', mode: 'lines', x: [-1.2, 1.2], y: [0, 0], z: [0, 0], line: axisStyle, hoverinfo: 'skip' },
+            { type: 'scatter3d', mode: 'lines', x: [0, 0], y: [-1.2, 1.2], z: [0, 0], line: axisStyle, hoverinfo: 'skip' },
+            { type: 'scatter3d', mode: 'lines', x: [0, 0], y: [0, 0], z: [-1.2, 1.2], line: axisStyle, hoverinfo: 'skip' },
+            {
+                type: 'scatter3d', mode: 'text',
+                x: [0, 0, 1.3, -1.3, 0, 0], y: [0, 1.3, 0, 0, -1.3, 0], z: [1.3, 0, 0, 0, 0, -1.3],
+                text: ['|0⟩', '|i⟩', '|+⟩', '|−⟩', '|−i⟩', '|1⟩'],
+                textfont: { size: 18, color: '#000' }, hoverinfo: 'skip'
+            },
+            {
+                type: 'scatter3d', mode: 'lines+markers+text',
+                x: [0, initX], y: [0, initY], z: [0, initZ], 
+                text: ['', '|ψ⟩'], textposition: 'top center',
+                textfont: { size: 20, color: '#d9534f' },
+                line: { color: '#d9534f', width: 8 },
+                marker: { size: 6, color: '#d9534f' },
+                hoverinfo: 'none'
+            }
+        ];
+
+        let layout = {
+            scene: {
+                xaxis: { visible: false, range: [-1.5, 1.5] },
+                yaxis: { visible: false, range: [-1.5, 1.5] },
+                zaxis: { visible: false, range: [-1.5, 1.5] },
+                aspectmode: 'cube',
+                camera: { eye: { x: 1.5, y: 1.5, z: 0.8 } }
+            },
+            margin: { l: 0, r: 0, b: 0, t: 30 }, 
+            showlegend: false
+        };
+
+        Plotly.newPlot('plot', data, layout, {displayModeBar: false});
+
+        function updateBloch() {
+            let thetaIdx = parseInt(document.getElementById('theta-slider').value);
+            let phiIdx = parseInt(document.getElementById('phi-slider').value);
+
+            let theta = (thetaIdx * Math.PI) / 12;
+            let phi = (phiIdx * Math.PI) / 12;
+
+            // Update UI Slider Labels
+            let thetaStr = getPiFraction(thetaIdx, 12).replace(/\\frac{([^}]*)}{([^}]*)}/g, '$1/$2').replace(/\\/g, '');
+            let phiStr = getPiFraction(phiIdx, 12).replace(/\\frac{([^}]*)}{([^}]*)}/g, '$1/$2').replace(/\\/g, '');
+            document.getElementById('theta-val').innerText = thetaStr === "0" ? "0" : thetaStr;
+            document.getElementById('phi-val').innerText = phiStr === "0" ? "0" : phiStr;
+
+            // Calculate Amplitudes
+            let alpha = Math.cos(theta / 2);
+            let betaRe = Math.sin(theta / 2) * Math.cos(phi);
+            let betaIm = Math.sin(theta / 2) * Math.sin(phi);
+
+            // Clean up floating point near-zeros (prevent "-0.000")
+            if (Math.abs(alpha) < 0.0001) alpha = 0;
+            if (Math.abs(betaRe) < 0.0001) betaRe = 0;
+            if (Math.abs(betaIm) < 0.0001) betaIm = 0;
+
+            // Format strings
+            let alphaStr = alpha.toFixed(3);
+            let betaSign = betaIm >= 0 ? "+" : "-";
+            let betaStr = `${betaRe.toFixed(3)} ${betaSign} ${Math.abs(betaIm).toFixed(3)}i`;
+
+            // Display Amplitudes
+            document.getElementById('alpha-val').innerText = alphaStr;
+            document.getElementById('beta-val').innerText = betaStr;
+
+            // Update 3D Vector
+            let x = Math.sin(theta) * Math.cos(phi);
+            let y = Math.sin(theta) * Math.sin(phi);
+            let z = Math.cos(theta);
+
+            Plotly.restyle('plot', { x: [[0, x]], y: [[0, y]], z: [[0, z]] }, [5]);
+
+            // Update LaTeX Math equation
+            let thetaHalfLatex = getPiFraction(thetaIdx, 24); 
+            let phiLatex = getPiFraction(phiIdx, 12);
+            let phaseTerm = phiIdx === 0 ? "" : `e^{i ${phiLatex}}`;
+
+            let mathString = `$$ |\\psi\\rangle = \\cos\\left(${thetaHalfLatex}\\right)|0\\rangle + ${phaseTerm} \\sin\\left(${thetaHalfLatex}\\right)|1\\rangle $$`;
+            
+            let mathNode = document.getElementById('math-display');
+            mathNode.innerHTML = mathString;
+            
+            if (window.MathJax) { MathJax.typesetPromise([mathNode]); }
+        }
+
+        function setPreset(thetaVal, phiVal) {
+            document.getElementById('theta-slider').value = thetaVal;
+            document.getElementById('phi-slider').value = phiVal;
+            updateBloch();
+        }
+
+        document.getElementById('theta-slider').addEventListener('input', updateBloch);
+        document.getElementById('phi-slider').addEventListener('input', updateBloch);
+        
+        window.onload = () => { setTimeout(updateBloch, 500); };
+    </script>
+</body>
+</html>

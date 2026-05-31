@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoAsylum | Faculty Portal</title>
+    <link rel="icon" type="image/png" href="https://www.algoasylum.com/algoasylum.png">
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100vh; width: 100%; overflow: hidden; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        #chat-container { display: flex; width: 100%; max-width: 800px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); flex-direction: column; height: 90vh; }
+        #chat-header { background: #1e293b; color: white; padding: 16px; text-align: center; font-weight: bold; border-radius: 8px 8px 0 0; }
+        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        
+        .message { padding: 12px 16px; border-radius: 8px; max-width: 85%; line-height: 1.5; }
+        .user-msg { background: #007bff; color: white; align-self: flex-end; }
+        .ai-msg { background: #f1f5f9; color: #1e293b; align-self: flex-start; border: 1px solid #e2e8f0; }
+        
+        .ai-msg p { margin-top: 0; margin-bottom: 10px; }
+        .ai-msg p:last-child { margin-bottom: 0; }
+        .ai-msg pre { background: #1e293b; color: white; padding: 10px; border-radius: 6px; overflow-x: auto; }
+        .ai-msg code { font-family: monospace; background: #e2e8f0; padding: 2px 4px; border-radius: 4px; }
+        .ai-msg pre code { background: none; padding: 0; }
+        
+        #input-area { display: flex; padding: 16px; border-top: 1px solid #e2e8f0; background: #fafafa; border-radius: 0 0 8px 8px; }
+        #user-input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; }
+        #send-btn { background: #1e293b; color: white; border: none; padding: 12px 20px; margin-left: 12px; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
+        #send-btn:hover { background: #0f172a; }
+    </style>
+</head>
+<body>
+
+    <div id="chat-container">
+        <div id="chat-header">Chandra - Socratic Quantum Tutor</div>
+        
+        <div id="edx-context-bar" style="background: #e2e8f0; font-size: 12px; padding: 4px 10px; text-align: center; color: #475569;">
+            Authenticating with Open edX...
+        </div>
+        
+        <div id="chat-box"></div> 
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type your response..." onkeypress="handleKeyPress(event)">
+            <button id="send-btn" onclick="sendUserMessage()">Send</button>
+        </div>
+    </div>
+
+    <script type="module">
+        const PROXY_URL = "https://chandra.algoasylum.com/api/chat";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJZ96Mz3hgWyYyuWOcKC_JmqSAo67k0aGFUHElmPnigZlme24YMAubxsmvaVJZlAdE/exec";
+        
+        let globalUserEmail = ""; 
+        let globalSessionId = ""; 
+        let currentSection = "";
+        let currentSubsection = "";
+
+        const chatBox = document.getElementById("chat-box");
+        const inputField = document.getElementById("user-input");
+        const contextBar = document.getElementById("edx-context-bar");
+
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `message ${sender === 'user' ? 'user-msg' : 'ai-msg'}`;
+            
+            if (sender === 'user') {
+                msgDiv.innerText = text; 
+            } else {
+                msgDiv.innerHTML = marked.parse(text); 
+            }
+            
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            if (sender === 'ai' && window.MathJax) {
+                window.MathJax.typesetPromise([msgDiv]).catch((err) => console.log('MathJax error:', err));
+            }
+        }
+
+        window.handleKeyPress = function(event) {
+            if (event.key === "Enter") window.sendUserMessage();
+        }
+
+        async function fetchFromBackend(messageText) {
+            const loadingId = "loading-" + Date.now();
+            const loadingDiv = document.createElement("div");
+            loadingDiv.id = loadingId;
+            loadingDiv.className = "message ai-msg";
+            loadingDiv.innerText = "Chandra is thinking...";
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: globalUserEmail, 
+                        session_id: globalSessionId,
+                        section: currentSection,
+                        subsection: currentSubsection,
+                        message: messageText,
+                        explanation_level: "medium", // Defaulted since UI was removed
+                        math_level: "medium"         // Defaulted since UI was removed
+                    })
+                });
+
+                const data = await response.json();
+                document.getElementById(loadingId).remove();
+                
+                if (data.success) {
+                    let aiText = data.text;
+
+                    // GRADUATION LOGIC: Log completion to Google Sheets
+                    if (aiText.includes("||CONCEPT_COMPLETE||")) {
+                        aiText = aiText.replace("||CONCEPT_COMPLETE||", "").trim();
+                        
+                        // Fire and forget log to Google Sheets
+                        fetch(APPS_SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ 
+                                action: "log_completion", 
+                                userEmail: globalUserEmail, 
+                                section: currentSection, 
+                                subsection: currentSubsection 
+                            })
+                        }).catch(e => console.error("Database update failed:", e));
+                    }
+
+                    if (aiText.includes("||RESET_PROGRESS||")) {
+                        aiText = aiText.replace("||RESET_PROGRESS||", "").trim();
+                    }
+
+                    appendMessage(aiText, "ai");
+                } else {
+                    throw new Error(data.error || "Unknown proxy error");
+                }
+
+            } catch (error) {
+                console.error("API Error:", error);
+                document.getElementById(loadingId)?.remove();
+                appendMessage("Sorry, I encountered a server connection error. Please try again.", "ai");
+            }
+        }
+
+        window.sendUserMessage = function() {
+            const text = inputField.value.trim();
+            if (!text) return;
+            appendMessage(text, "user");
+            inputField.value = "";
+            fetchFromBackend(text); 
+        }
+
+        async function startChandra(userEmail, sessionId, section, subsection) {
+            globalUserEmail = userEmail;
+            globalSessionId = sessionId;
+            currentSection = section;
+            currentSubsection = subsection;
+            
+            // Update UI to reflect the Open edX connection
+            contextBar.innerText = `Connected as: ${userEmail} | Section: ${section} | Subsection: ${subsection}`;
+
+            // Invisible Kickoff to Python Proxy
+            await fetchFromBackend(`System Action: The user has just opened Section ${section}, Subsection ${subsection}. Please introduce yourself, state the goal for this specific topic, and ask your first guiding question.`);
+        }
+
+        // On Load: Extract edX parameters from the URL
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+            const sessionId = urlParams.get('session');
+            const section = urlParams.get('section') || '1';
+            const subsection = urlParams.get('subsection') || '1';
+
+            if (email) {
+                startChandra(email, sessionId, section, subsection);
+            } else {
+                contextBar.innerText = "Error: Cannot run outside of Open edX.";
+                contextBar.style.background = "#fee2e2";
+                contextBar.style.color = "#991b1b";
+                appendMessage("Access Denied: Missing authentication parameters. Chandra must be accessed directly through the Open edX platform.", "ai");
+                document.getElementById('input-area').style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

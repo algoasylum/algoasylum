@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gamepad Diagnostic</title>
+<style>
+  body { background: #111; color: #0f0; font-family: monospace; font-size: 1.2rem; padding: 20px; }
+</style>
+</head>
+<body>
+  <div id="status">1. Connect Remote<br>2. Tap screen once to init<br>3. Press buttons</div>
+  <pre id="output"></pre>
+
+  <script>
+    let active = false;
+    
+    document.addEventListener('pointerdown', () => {
+      active = true;
+      document.getElementById('status').innerText = "Polling active. Press remote buttons...";
+      poll();
+    });
+
+    function poll() {
+      if (!active) return;
+      
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let out = "";
+      
+      for (let i = 0; i < gamepads.length; i++) {
+        const gp = gamepads[i];
+        if (gp) {
+          out += `Gamepad ${i}: ${gp.id}\n\n`;
+          
+          out += `--- BUTTONS ---\n`;
+          gp.buttons.forEach((b, index) => {
+            if (b.pressed || b.value > 0) {
+              out += `[Button ${index}] Pressed! (val: ${b.value})\n`;
+            }
+          });
+
+          out += `\n--- AXES (Joystick/D-Pad) ---\n`;
+          gp.axes.forEach((a, index) => {
+            // Filter out minor stick drift (noise below 0.1)
+            if (Math.abs(a) > 0.1) {
+              out += `[Axis ${index}] Active! (val: ${a.toFixed(2)})\n`;
+            }
+          });
+        }
+      }
+      
+      if (out) document.getElementById('output').innerText = out;
+      requestAnimationFrame(poll);
+    }
+  </script>
+</body>
+</html>

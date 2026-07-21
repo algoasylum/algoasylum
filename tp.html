@@ -12,7 +12,6 @@
     margin: 0;
   }
 
-  /* Setup Screen - Not Mirrored */
   #setup-ui {
     padding: 30px;
     font-size: 1.2rem;
@@ -41,11 +40,6 @@
     cursor: pointer;
   }
 
-  button:active {
-    background: #0056b3;
-  }
-
-  /* Prompter Screen - Mirrored */
   #prompter-ui {
     display: none; 
     font-size: 9vw; 
@@ -68,24 +62,22 @@
 </head>
 <body>
 
-  <!-- 1. Setup Interface -->
   <div id="setup-ui">
     <h2>Server Prompter</h2>
-    <label for="file-url">Script filename or URL:</label>
+    <label for="file-url">Script filename:</label>
     <input type="text" id="file-url" value="script.html" />
     <button id="load-btn">Load & Start</button>
     <div id="error-msg" style="color: #ff4444; font-size: 1rem;"></div>
   </div>
 
-  <!-- 2. Prompter Interface -->
   <div id="prompter-ui">
-    <div id="debugger">Waiting for key...</div>
+    <div id="debugger">Waiting for USB clicker...</div>
     <div id="script-container"></div>
   </div>
 
   <script>
     let isPlaying = false;
-    let speed = 2; // Pixels per frame
+    let speed = 2; 
     let animationId;
     let lastToggleTime = 0;
 
@@ -95,26 +87,16 @@
     const debuggerEl = document.getElementById('debugger');
     const errorMsg = document.getElementById('error-msg');
 
-    // --- FETCH FROM SERVER ---
     document.getElementById('load-btn').addEventListener('click', function() {
       const url = document.getElementById('file-url').value;
       
       fetch(url)
         .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           return response.text();
         })
         .then(text => {
-          // Convert newlines to paragraphs
-          const html = text.split('\n').map(line => {
-            return line.trim() === '' ? '<br>' : `<p>${line}</p>`;
-          }).join('');
-          
-          scriptContainer.innerHTML = html;
-          
-          // Hide setup, show prompter
+          scriptContainer.innerHTML = text;
           setupUI.style.display = 'none';
           prompterUI.style.display = 'block';
         })
@@ -123,7 +105,6 @@
         });
     });
 
-    // --- SCROLLING & REMOTE LOGIC ---
     function scrollText() {
       if (isPlaying) {
         window.scrollBy(0, speed);
@@ -133,7 +114,7 @@
 
     function togglePlay() {
       const now = Date.now();
-      if (now - lastToggleTime < 500) return; // 500ms debounce
+      if (now - lastToggleTime < 500) return; 
       
       lastToggleTime = now;
       isPlaying = !isPlaying;
@@ -147,25 +128,28 @@
       }
     }
 
-    // Touch anywhere on the prompter text to toggle
+    // Touch screen toggle
     document.addEventListener('pointerdown', (e) => {
       if (prompterUI.style.display === 'block' && e.target.id !== 'debugger') {
         togglePlay();
       }
     });
 
-    // Prevent default scrolling for Arrow keys
-    document.addEventListener('keydown', (e) => {
+    // Catch the key PRESS globally and stop Chrome from natively jumping down the page
+    window.addEventListener('keydown', (e) => {
       if (prompterUI.style.display === 'block') {
-        e.preventDefault();
+        // Prevent default behavior for arrows, space, and page up/down
+        if (['PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
+          e.preventDefault();
+        }
       }
     });
 
-    // Listen for the remote's keyup event
-    document.addEventListener('keyup', (e) => {
+    // Catch the key RELEASE globally to trigger our play/pause toggle
+    window.addEventListener('keyup', (e) => {
       if (prompterUI.style.display === 'block') {
         e.preventDefault();
-        debuggerEl.innerText = `Key: ${e.key}`;
+        debuggerEl.innerText = `Key caught: ${e.key}`;
         togglePlay();
       }
     });

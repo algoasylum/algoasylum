@@ -25,8 +25,52 @@
 <body>
 
   <!-- Replace this with your actual script -->
-  <p>This is your script.</p>
-  <p>It is white on black, horizontally mirrored, and ready for the glass.</p>
+
+  <h1>Functions: The Building Blocks of Machine Learning</h1>
+
+    <p>Okay, so before we dive deeper into our algorithms, I want to take a step back. We need to talk about some of the fundamental mathematics that form the basis for everything we do in machine learning.</p>
+
+    <p>This might be a bit repetitive for some of you, especially if you've done a lot of math in the past. But I think the way we are going to talk about it will give you a really good orientation. It's <span class="highlight">absolutely important</span> that you understand this well, because literally everything we do in machine learning is built around functions of some sort or the other.</p>
+
+    <p>So, first of all: what is a function? Take a second. What comes to your mind when you hear the word "function"?</p>
+
+    <p>You might be thinking of variables, or a formula, or an input and an output. And all of these are correct to different degrees! But I want to flesh this out a bit more.</p>
+
+    <p>Broadly speaking, a function is a <span class="highlight">transformation</span>. It is a map.</p>
+
+    <p>You can think of it kind of like a box. You put something in, and you get something out. And exactly what you get out depends on what this function is, and what the input is.</p>
+
+    <p>Typically, the way we've thought of functions algebraically is that we call the input X, and we call the output Y. So we write Y equals f of X.</p>
+
+    <p>Now, a common misconception—and this trips up a lot of people when they first come back to math—is thinking that one side is always a variable and the other is a constant. Let me show you why we have to be careful with that thinking.</p>
+
+    <p>Suppose I tell you my function is <span class="highlight">f of x equals 5</span>.</p>
+
+    <p>If my input X is 0, what is my output? It's 5.<br>
+    What if X is 1? It's still 5.<br>
+    What if X is 10,000? The output is exactly 5.</p>
+
+    <p>Because there is no X on the right side of that equation, the box just does the same thing no matter what you put into it. So yes, the output is a constant 5, but it is <span class="highlight">still a function</span>. It is a transformation that transforms everything into 5.</p>
+
+    <p>But in most cases, your output will vary according to X. If our function is <span class="highlight">Y equals 2 plus X</span>, and we put a 0 in, we get a 2 out. If we put a 1 in, we get a 3 out.</p>
+
+    <p>And this brings us to a very important rule about this box. It is <span class="highlight">strictly predictable</span>. For any given input you put in, the box must always give you the exact same output. If you put a 1 in today and get a 3, you have to get a 3 tomorrow.</p>
+
+    <p>Now, before we move on, I want to connect this directly to data science. It is the exact same concept, just with different labels.</p>
+
+    <p>In math, we talk about the input X. In machine learning, we call this our <span class="highlight">Features</span> or our observations.</p>
+
+    <p>In math, we have the output Y. In machine learning, we call this our <span class="highlight">Target</span> or our label.</p>
+
+    <p>And the function itself? That box? That is our <span class="highlight">Model</span>.</p>
+
+    <p>And here is the crucial shift in mindset.</p>
+
+    <p>In traditional math, I give you the input X, and I give you the formula for the box, and I ask you to calculate the output Y.</p>
+
+    <p>But in data science and machine learning, the data comes to us as historical observations. We already have the inputs, and we already know what the outputs were. What we <span class="highlight">don't</span> have is the formula.</p>
+
+    <p>Our entire goal in machine learning is to look at the inputs and the outputs, and <span class="highlight">figure out what the box is</span>. We are trying to figure out that formula.</p>
 
   <script>
     let isPlaying = false;

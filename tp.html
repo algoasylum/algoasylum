@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clean Prompter</title>
+<style>
+  body {
+    background-color: black;
+    color: white;
+    /* Scales well on mobile screens */
+    font-size: 9vw; 
+    font-family: Arial, sans-serif;
+    padding: 100px 20px 800px 20px; /* Extra bottom padding so the text clears the glass */
+    margin: 0;
+    
+    /* This is the magic mirroring trick */
+    transform: scaleX(-1);
+  }
+  p { 
+    line-height: 1.6; 
+  }
+</style>
+</head>
+<body>
+
+  <!-- Replace this with your actual script -->
+  <p>This is your script.</p>
+  <p>It is white on black, horizontally mirrored, and ready for the glass.</p>
+
+  <script>
+    let isPlaying = false;
+    let speed = 2; // Pixels per frame. Adjust for your reading speed.
+    let animationId;
+
+    function scrollText() {
+      if (isPlaying) {
+        window.scrollBy(0, speed);
+        animationId = requestAnimationFrame(scrollText);
+      }
+    }
+
+    // Most cheap remotes send a Space, Enter, or Arrow Key.
+    // This script toggles play/pause on ANY keydown event.
+    document.addEventListener('keydown', (e) => {
+      // Prevent default scrolling behavior from the remote's keypress
+      e.preventDefault(); 
+      
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        scrollText();
+      } else {
+        cancelAnimationFrame(animationId);
+      }
+    });
+  </script>
+</body>
+</html>

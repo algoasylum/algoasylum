@@ -12,19 +12,14 @@
     font-family: Arial, sans-serif;
     padding: 100px 20px 800px 20px; 
     margin: 0;
-    
-    /* Mirrors the entire page */
     transform: scaleX(-1);
   }
-  p { 
-    line-height: 1.6; 
-  }
+  p { line-height: 1.6; }
   
-  /* Flips the debug text back to normal so you can read it on your phone screen */
   #debugger {
     position: fixed;
     top: 10px;
-    right: 10px; /* Mirrored, so this appears on the left */
+    right: 10px;
     color: #00ff00;
     font-size: 16px;
     font-family: monospace;
@@ -35,11 +30,12 @@
 </head>
 <body>
 
-  <div id="debugger">System Ready. Tap screen or press remote.</div>
+  <div id="debugger">Waiting for input...</div>
 
   <p>This is your script.</p>
-  <p>Tap the screen to play or pause.</p>
-  <p>Watch the green text to see what your remote is broadcasting.</p>
+  <p>1. Switch remote to GAME mode.</p>
+  <p>2. Tap this screen ONCE to initialize.</p>
+  <p>3. Press a button on the remote.</p>
 
   <h1>Functions: The Building Blocks of Machine Learning</h1>
 
@@ -89,41 +85,63 @@
 
   <script>
     let isPlaying = false;
-    let speed = 2; // Pixels per frame
-    let animationId;
+    let speed = 2; 
+    let lastButtonState = false;
     const debuggerEl = document.getElementById('debugger');
-
-    function scrollText() {
-      if (isPlaying) {
-        window.scrollBy(0, speed);
-        animationId = requestAnimationFrame(scrollText);
-      }
-    }
 
     function togglePlay() {
       isPlaying = !isPlaying;
-      if (isPlaying) {
-        debuggerEl.innerText = "Status: PLAYING";
-        scrollText();
-      } else {
-        debuggerEl.innerText = "Status: PAUSED";
-        cancelAnimationFrame(animationId);
-      }
+      debuggerEl.innerText = isPlaying ? "Status: PLAYING" : "Status: PAUSED";
     }
 
-    // 1. Touch/Click listener for the phone screen
+    // Polling loop for Gamepad API + Scrolling
+    function mainLoop() {
+      if (isPlaying) {
+        window.scrollBy(0, speed);
+      }
+
+      // Poll all connected gamepads
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let anyButtonPressed = false;
+      let pressedButtonIndex = -1;
+
+      for (let gp of gamepads) {
+        if (!gp) continue;
+        for (let i = 0; i < gp.buttons.length; i++) {
+          if (gp.buttons[i].pressed) {
+            anyButtonPressed = true;
+            pressedButtonIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Debounce the hardware press so it only toggles once per click
+      if (anyButtonPressed && !lastButtonState) {
+        debuggerEl.innerText = `Gamepad Button ${pressedButtonIndex} caught!`;
+        togglePlay();
+      }
+      
+      lastButtonState = anyButtonPressed;
+      
+      requestAnimationFrame(mainLoop);
+    }
+
+    // Mobile browsers require a user gesture before exposing the Gamepad API to prevent fingerprinting.
     document.addEventListener('pointerdown', (e) => {
-      // Ignore clicks directly on the debugger text
       if(e.target.id === 'debugger') return; 
       togglePlay();
     });
 
-    // 2. Keyboard/Remote listener
+    // Fallback for standard keydown (laptops)
     document.addEventListener('keydown', (e) => {
       e.preventDefault(); 
-      debuggerEl.innerText = `Key caught: ${e.key} (Code: ${e.keyCode})`;
+      debuggerEl.innerText = `Key caught: ${e.key}`;
       togglePlay();
     });
+
+    // Start the continuous polling loop
+    requestAnimationFrame(mainLoop);
   </script>
 </body>
 </html>

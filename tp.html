@@ -8,23 +8,38 @@
   body {
     background-color: black;
     color: white;
-    /* Scales well on mobile screens */
     font-size: 9vw; 
     font-family: Arial, sans-serif;
-    padding: 100px 20px 800px 20px; /* Extra bottom padding so the text clears the glass */
+    padding: 100px 20px 800px 20px; 
     margin: 0;
     
-    /* This is the magic mirroring trick */
+    /* Mirrors the entire page */
     transform: scaleX(-1);
   }
   p { 
     line-height: 1.6; 
   }
+  
+  /* Flips the debug text back to normal so you can read it on your phone screen */
+  #debugger {
+    position: fixed;
+    top: 10px;
+    right: 10px; /* Mirrored, so this appears on the left */
+    color: #00ff00;
+    font-size: 16px;
+    font-family: monospace;
+    z-index: 999;
+    transform: scaleX(-1); 
+  }
 </style>
 </head>
 <body>
 
-  <!-- Replace this with your actual script -->
+  <div id="debugger">System Ready. Tap screen or press remote.</div>
+
+  <p>This is your script.</p>
+  <p>Tap the screen to play or pause.</p>
+  <p>Watch the green text to see what your remote is broadcasting.</p>
 
   <h1>Functions: The Building Blocks of Machine Learning</h1>
 
@@ -74,8 +89,9 @@
 
   <script>
     let isPlaying = false;
-    let speed = 2; // Pixels per frame. Adjust for your reading speed.
+    let speed = 2; // Pixels per frame
     let animationId;
+    const debuggerEl = document.getElementById('debugger');
 
     function scrollText() {
       if (isPlaying) {
@@ -84,18 +100,29 @@
       }
     }
 
-    // Most cheap remotes send a Space, Enter, or Arrow Key.
-    // This script toggles play/pause on ANY keydown event.
-    document.addEventListener('keydown', (e) => {
-      // Prevent default scrolling behavior from the remote's keypress
-      e.preventDefault(); 
-      
+    function togglePlay() {
       isPlaying = !isPlaying;
       if (isPlaying) {
+        debuggerEl.innerText = "Status: PLAYING";
         scrollText();
       } else {
+        debuggerEl.innerText = "Status: PAUSED";
         cancelAnimationFrame(animationId);
       }
+    }
+
+    // 1. Touch/Click listener for the phone screen
+    document.addEventListener('pointerdown', (e) => {
+      // Ignore clicks directly on the debugger text
+      if(e.target.id === 'debugger') return; 
+      togglePlay();
+    });
+
+    // 2. Keyboard/Remote listener
+    document.addEventListener('keydown', (e) => {
+      e.preventDefault(); 
+      debuggerEl.innerText = `Key caught: ${e.key} (Code: ${e.keyCode})`;
+      togglePlay();
     });
   </script>
 </body>

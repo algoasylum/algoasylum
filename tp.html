@@ -26,17 +26,28 @@
     z-index: 999;
     transform: scaleX(-1); 
   }
+
+  /* The hidden trap must be technically visible to receive focus, 
+     but positioned off-screen so you don't see it. */
+  #key-trap {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    opacity: 0;
+  }
 </style>
 </head>
 <body>
 
-  <div id="debugger">Waiting for input...</div>
+  <!-- Hidden text input to force keyboard focus -->
+  <input type="text" id="key-trap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+
+  <div id="debugger">Tap screen to lock focus...</div>
 
   <p>This is your script.</p>
-  <p>1. Switch remote to GAME mode.</p>
-  <p>2. Tap this screen ONCE to initialize.</p>
+  <p>1. Switch remote to KEY mode.</p>
+  <p>2. Tap the screen ONCE.</p>
   <p>3. Press a button on the remote.</p>
-
   <h1>Functions: The Building Blocks of Machine Learning</h1>
 
     <p>Okay, so before we dive deeper into our algorithms, I want to take a step back. We need to talk about some of the fundamental mathematics that form the basis for everything we do in machine learning.</p>
@@ -85,63 +96,62 @@
 
   <script>
     let isPlaying = false;
-    let speed = 2; 
-    let lastButtonState = false;
+    let speed = 2;
+    let animationId;
+    let lastToggleTime = 0;
+    
     const debuggerEl = document.getElementById('debugger');
+    const trap = document.getElementById('key-trap');
 
-    function togglePlay() {
-      isPlaying = !isPlaying;
-      debuggerEl.innerText = isPlaying ? "Status: PLAYING" : "Status: PAUSED";
-    }
-
-    // Polling loop for Gamepad API + Scrolling
-    function mainLoop() {
+    function scrollText() {
       if (isPlaying) {
         window.scrollBy(0, speed);
+        animationId = requestAnimationFrame(scrollText);
       }
-
-      // Poll all connected gamepads
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      let anyButtonPressed = false;
-      let pressedButtonIndex = -1;
-
-      for (let gp of gamepads) {
-        if (!gp) continue;
-        for (let i = 0; i < gp.buttons.length; i++) {
-          if (gp.buttons[i].pressed) {
-            anyButtonPressed = true;
-            pressedButtonIndex = i;
-            break;
-          }
-        }
-      }
-
-      // Debounce the hardware press so it only toggles once per click
-      if (anyButtonPressed && !lastButtonState) {
-        debuggerEl.innerText = `Gamepad Button ${pressedButtonIndex} caught!`;
-        togglePlay();
-      }
-      
-      lastButtonState = anyButtonPressed;
-      
-      requestAnimationFrame(mainLoop);
     }
 
-    // Mobile browsers require a user gesture before exposing the Gamepad API to prevent fingerprinting.
+    function togglePlay() {
+      const now = Date.now();
+      // Debounce: Ignore any inputs if we toggled less than 500ms ago
+      if (now - lastToggleTime < 500) return; 
+      
+      lastToggleTime = now;
+      isPlaying = !isPlaying;
+      
+      if (isPlaying) {
+        debuggerEl.innerText = "Status: PLAYING";
+        scrollText();
+      } else {
+        debuggerEl.innerText = "Status: PAUSED";
+        cancelAnimationFrame(animationId);
+      }
+    }
+
+    // Force focus onto the hidden input when you tap the screen
     document.addEventListener('pointerdown', (e) => {
-      if(e.target.id === 'debugger') return; 
-      togglePlay();
+      trap.focus();
+      
+      // If tapping the screen, toggle the scrolling directly
+      if(e.target.id !== 'debugger' && e.target.id !== 'key-trap') {
+        togglePlay();
+      }
     });
 
-    // Fallback for standard keydown (laptops)
-    document.addEventListener('keydown', (e) => {
-      e.preventDefault(); 
-      debuggerEl.innerText = `Key caught: ${e.key}`;
-      togglePlay();
+    // Keep focus trapped even if the browser tries to blur it
+    trap.addEventListener('blur', () => {
+      setTimeout(() => trap.focus(), 10);
     });
 
-    // Start the continuous polling loop
-    requestAnimationFrame(mainLoop);
+    // Listen on the trap itself, and use 'keyup' to avoid auto-repeat spam
+    trap.addEventListener('keyup', (e) => {
+      e.preventDefault();
+      debuggerEl.innerText = `Remote key released: ${e.key}`;
+      
+      // Clear the trap so it doesn't fill up with junk characters
+      trap.value = ''; 
+      
+      togglePlay();
+    });
   </script>
 </body>
 </html>

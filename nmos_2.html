@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NMOS Transistor Inversion Dynamics & Transfer Curve</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            margin: 0;
+        }
+        h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        canvas {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+        }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>NMOS Inversion Dynamics & Transfer Characteristics</h2>
+    <canvas id="nmosCanvas" width="1150" height="400"></canvas>
+    
+    <div class="controls">
+        <div class="slider-group">
+            <div class="slider-header">
+                <span>Gate-Source Voltage (V<sub>GS</sub>)</span>
+                <span id="vgsVal">0.0 V</span>
+            </div>
+            <input type="range" id="vgsSlider" min="0" max="5" step="0.1" value="0">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-header">
+                <span>Drain-Source Voltage (V<sub>DS</sub>)</span>
+                <span id="vdsVal">0.0 V</span>
+            </div>
+            <input type="range" id="vdsSlider" min="0" max="5" step="0.1" value="0">
+        </div>
+    </div>
+    
+    <div id="statusText" class="status" style="background: #fee; color: #c0392b;">State: Cutoff (OFF)</div>
+</div>
+
+<script>
+    const canvas = document.getElementById('nmosCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const vgsSlider = document.getElementById('vgsSlider');
+    const vdsSlider = document.getElementById('vdsSlider');
+    const vgsVal = document.getElementById('vgsVal');
+    const vdsVal = document.getElementById('vdsVal');
+    const statusText = document.getElementById('statusText');
+
+    // Transistor Physical Parameters
+    const VT = 1.0; // Threshold Voltage
+    const MAX_DEPTH = 35; 
+
+    // Drawing coordinates and dimensions for Transistor
+    const cx = 350, cy = 200; // Center shifted left
+    const subW = 500, subH = 200;
+    const sdW = 100, sdH = 60;
+    const oxW = 200, oxH = 15;
+    const polyH = 40;
+
+    // Drawing coordinates and dimensions for Plot
+    const plotOriginX = 750;
+    const plotOriginY = 320;
+    const plotW = 320;
+    const plotH = 250;
+    const maxVGS = 5.0;
+    const maxID = 8.0; // Normalized max current at VGS=5
+
+    function calcID(v_gs, v_ds) {
+        if (v_gs <= VT) return 0;
+        const vov = v_gs - VT;
+        // Normalized conduction parameter k = 1 for visualization
+        if (v_ds < vov) {
+            return (vov * v_ds - 0.5 * v_ds * v_ds); // Linear
+        } else {
+            return 0.5 * vov * vov; // Saturation
+        }
+    }
+
+    function drawPlot(currentVGS, currentVDS) {
+        // Draw Axes
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Y-axis (ID)
+        ctx.moveTo(plotOriginX, plotOriginY - plotH);
+        ctx.lineTo(plotOriginX, plotOriginY);
+        // X-axis (VGS)
+        ctx.lineTo(plotOriginX + plotW, plotOriginY);
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#333';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('VGS (V)', plotOriginX + plotW / 2, plotOriginY + 40);
+        
+        ctx.save();
+        ctx.translate(plotOriginX - 40, plotOriginY - plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('ID', 0, 0);
+        ctx.restore();
+
+        // VT Marker
+        const vtX = plotOriginX + (VT / maxVGS) * plotW;
+        ctx.fillStyle = '#e53935';
+        ctx.fillText('VT', vtX, plotOriginY + 20);
+        ctx.beginPath();
+        ctx.moveTo(vtX, plotOriginY - 5);
+        ctx.lineTo(vtX, plotOriginY + 5);
+        ctx.stroke();
+
+        // Draw the transfer curve for the current VDS
+        ctx.strokeStyle = '#2980b9';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        
+        for (let v = 0; v <= maxVGS; v += 0.1) {
+            const id = calcID(v, currentVDS);
+            const px = plotOriginX + (v / maxVGS) * plotW;
+            const py = plotOriginY - (id / maxID) * plotH;
+            
+            if (v === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Draw Operating Point Dot
+        const currentID = calcID(currentVGS, currentVDS);
+        const opX = plotOriginX + (currentVGS / maxVGS) * plotW;
+        const opY = plotOriginY - (currentID / maxID) * plotH;
+
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(opX, opY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#c0392b';
+        ctx.stroke();
+
+        // Display exact ID value
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'left';
+        ctx.fillText(`ID ∝ ${currentID.toFixed(2)}`, plotOriginX + 20, plotOriginY - plotH + 20);
+    }
+
+    function drawTransistor(vgs, vds) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. P-Substrate
+        ctx.fillStyle = '#e3f2fd'; 
+        ctx.fillRect(cx - subW/2, cy, subW, subH);
+        ctx.fillStyle = '#666';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('P-type Substrate', cx, cy + subH - 20);
+
+        // 2. N+ Source (Left) & Drain (Right)
+        const sourceX = cx - oxW/2 - sdW;
+        ctx.fillStyle = '#2196f3';
+        ctx.fillRect(sourceX, cy, sdW, sdH);
+        ctx.fillStyle = 'white';
+        ctx.fillText('N+ Source', sourceX + sdW/2, cy + 35);
+        
+        const drainX = cx + oxW/2;
+        ctx.fillStyle = '#2196f3'; 
+        ctx.fillRect(drainX, cy, sdW, sdH);
+        ctx.fillStyle = 'white';
+        ctx.fillText('N+ Drain', drainX + sdW/2, cy + 35);
+
+        // 3. Gate Oxide
+        const oxY = cy - oxH;
+        ctx.fillStyle = '#9e9e9e'; 
+        ctx.fillRect(cx - oxW/2, oxY, oxW, oxH);
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('SiO2', cx, oxY + 12);
+
+        // 4. Poly Gate
+        const polyY = oxY - polyH;
+        ctx.fillStyle = '#e53935'; 
+        ctx.fillRect(cx - oxW/2, polyY, oxW, polyH);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Gate', cx, polyY + 25);
+
+        // 5. Terminals and Wires
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(sourceX + sdW/2, cy);
+        ctx.lineTo(sourceX + sdW/2, cy - 80);
+        ctx.moveTo(drainX + sdW/2, cy);
+        ctx.lineTo(drainX + sdW/2, cy - 80);
+        ctx.moveTo(cx, polyY);
+        ctx.lineTo(cx, polyY - 40);
+        ctx.stroke();
+
+        ctx.fillStyle = '#333';
+        ctx.fillText('S', sourceX + sdW/2, cy - 90);
+        ctx.fillText('D', drainX + sdW/2, cy - 90);
+        ctx.fillText('G', cx, polyY - 50);
+
+        // Divider Line
+        ctx.beginPath();
+        ctx.moveTo(680, 50);
+        ctx.lineTo(680, 350);
+        ctx.strokeStyle = '#ddd';
+        ctx.stroke();
+
+        // 6. Draw Inversion Layer (The Tapered Wedge)
+        const vov = vgs - VT; 
+        
+        if (vov > 0) {
+            const depthSource = Math.min((vov / 4.0) * MAX_DEPTH, MAX_DEPTH);
+            let depthDrain = ((vov - vds) / 4.0) * MAX_DEPTH;
+            
+            if (depthDrain < 0) depthDrain = 0; 
+
+            ctx.fillStyle = 'rgba(255, 193, 7, 0.85)'; 
+            ctx.beginPath();
+            ctx.moveTo(cx - oxW/2, cy); 
+            ctx.lineTo(cx + oxW/2, cy); 
+            ctx.lineTo(cx + oxW/2, cy + depthDrain); 
+            ctx.lineTo(cx - oxW/2, cy + depthSource); 
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#d35400';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Inversion Layer', cx, cy + depthSource + 20);
+
+            if (vds < vov) {
+                statusText.innerText = `State: Linear / Triode (ON)`;
+                statusText.style.background = '#e8f5e9';
+                statusText.style.color = '#2e7d32';
+                drawCurrentArrow(vds / 5.0); 
+            } else {
+                statusText.innerText = `State: Saturation (ON, Pinched-off)`;
+                statusText.style.background = '#fff3e0';
+                statusText.style.color = '#e65100';
+                drawCurrentArrow(0.8); 
+            }
+        } else {
+            statusText.innerText = `State: Cutoff (OFF)`;
+            statusText.style.background = '#ffebee';
+            statusText.style.color = '#c62828';
+        }
+
+        // 7. Draw the corresponding plot
+        drawPlot(vgs, vds);
+    }
+
+    function drawCurrentArrow(intensity) {
+        if (intensity <= 0) return;
+        
+        ctx.strokeStyle = `rgba(211, 84, 0, ${intensity})`; 
+        ctx.lineWidth = 4;
+        ctx.setLineDash([10, 5]);
+        
+        ctx.beginPath();
+        ctx.moveTo(cx - oxW/2 + 20, cy + 15);
+        ctx.lineTo(cx + oxW/2 - 20, cy + 15);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(cx + oxW/2 - 20, cy + 15);
+        ctx.lineTo(cx + oxW/2 - 30, cy + 10);
+        ctx.lineTo(cx + oxW/2 - 30, cy + 20);
+        ctx.fillStyle = `rgba(211, 84, 0, ${intensity})`;
+        ctx.fill();
+        
+        ctx.setLineDash([]); 
+    }
+
+    function update() {
+        const vgs = parseFloat(vgsSlider.value);
+        const vds = parseFloat(vdsSlider.value);
+        vgsVal.innerHTML = `${vgs.toFixed(1)} V`;
+        vdsVal.innerHTML = `${vds.toFixed(1)} V`;
+        drawTransistor(vgs, vds);
+    }
+
+    vgsSlider.addEventListener('input', update);
+    vdsSlider.addEventListener('input', update);
+
+    update();
+</script>
+
+</body>
+</html>

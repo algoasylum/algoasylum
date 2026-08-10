@@ -17,6 +17,7 @@ A few links to get you started:
 
 ## Visualizations
 - [Bloch Sphere](2_Bloch_Sphere_PofI.html)
+- [NMOS Transistor Operation](nmos_2.html)
 
   
 ## Talks

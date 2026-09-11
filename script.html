@@ -1,24 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reel 4 Script: Input Variance & Convergence Speed</title>
+<style>
+    body {
+        font-family: Georgia, 'Times New Roman', serif;
+        max-width: 700px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        line-height: 1.7;
+        color: #1a1a1a;
+    }
+    .timecode {
+        font-family: monospace;
+        color: #666;
+        font-weight: bold;
+        margin-top: 2rem;
+    }
+    p {
+        margin-top: 0.4rem;
+    }
+</style>
+</head>
 <body>
 
-<h1>Reel 3: Interpreting the Hessian Matrix</h1>
-
 <div class="timecode">00:00 - 00:20</div>
-<p>Last time, we saw that the Hessian matrix describes local curvature. But here's the catch: our standard model parameters—like w₁ and w₂—just define default coordinate axes. And those axes almost never align with the actual directions the loss surface is curving!</p>
+<p>What is variance? It's just how spread out your data is. Low variance means your values sit close together. High variance means they're scattered far apart. Simple idea — but it has a big effect on how your model trains.</p>
 
 <div class="timecode">00:20 - 00:45</div>
-<p>To find the landscape's natural orientation, we look at the Eigenvectors of the Hessian.</p>
-<p>Think of eigenvectors as setting up a custom coordinate system. They give us the true, perpendicular directions of maximum and minimum curvature, completely independent of parameter labels.</p>
+<p>Here's the loss landscape when variance is 1 — a nice, round, symmetric bowl. Now here's what happens when variance moves away from 1. The bowl stretches. It's no longer round — it pulls out into an oval.</p>
 
 <div class="timecode">00:45 - 01:15</div>
-<p>Once eigenvectors give us those directions, Eigenvalues tell us how sharply the surface actually curves along each one.</p>
-<p>A large positive eigenvalue means a steep, razor-sharp wall. A small positive value means a broad, flat valley. And if you get negative eigenvalues mixed in with positive ones, you're sitting at a saddle point—where the gradient drops to zero, but you're nowhere near a minimum!</p>
+<p>Why does that happen? Because the curve isn't symmetric anymore. One direction gets stretched more than the other. And that stretching is exactly what a higher eigenvalue means — the surface is curving harder along that one direction.</p>
 
 <div class="timecode">01:15 - 01:40</div>
-<p>Now, if you divide the largest eigenvalue by the smallest, you get the Condition Number.</p>
-<p>If this ratio is huge, your loss landscape turns into an elongated, narrow ravine. Gradient descent gets confused—it wastes time violently bouncing back and forth across the steep walls instead of sliding down the main valley.</p>
+<p>And that changes how gradient descent moves. On the stretched, steep direction, it takes a big step. On the direction that barely changed, it takes a small step. So instead of moving straight down the middle, it moves unevenly — fast one way, slow the other.</p>
 
 <div class="timecode">01:40 - 02:00</div>
-<p>An ill-conditioned Hessian clearly slows down convergence. But what actually causes these eigenvalues to stretch apart in the first place?</p>
-<p>In the next reel, we'll look at how the variance of your input data directly shapes this curvature and dictates how gradient descent behaves!</p>
+<p>So variance doesn't just scale your data — it reshapes the entire loss surface. And that shape is what gradient descent has to navigate, one uneven step at a time. This is exactly why we transform our data before training — so the surface stays balanced, and gradient descent converges faster.</p>
 
 </body>
+</html>

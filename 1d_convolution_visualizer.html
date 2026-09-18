@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1D Convolution: Edge Detection</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body { background-color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; }
+        /* Smooth sliding transition for the kernel */
+        .kernel-slider {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- Icons ---
+        const Icons = {
+            Play: () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            Pause: () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
+            SkipForward: () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>,
+            SkipBack: () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>,
+            Refresh: () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
+            Activity: () => <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        };
+
+        // --- Components ---
+
+        const ValueCell = ({ value, isKernel = false, isActive = false }) => {
+            let bg = "bg-white";
+            let text = "text-slate-600";
+            let border = "border-slate-200";
+
+            if (isKernel) {
+                if (value === -1) { bg = "bg-red-50"; text = "text-red-700"; border = "border-red-200"; }
+                if (value === 1) { bg = "bg-blue-50"; text = "text-blue-700"; border = "border-blue-200"; }
+            } else {
+                // Signal Colors
+                if (value === 1) { bg = "bg-slate-800"; text = "text-white"; border = "border-slate-800"; }
+                else if (value === 0) { bg = "bg-white"; text = "text-slate-400"; }
+                else if (value > 0) { bg = "bg-green-100"; text = "text-green-800"; border = "border-green-300"; } // Output Positive
+                else if (value < 0) { bg = "bg-red-100"; text = "text-red-800"; border = "border-red-300"; } // Output Negative
+            }
+
+            return (
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center font-mono font-bold text-sm md:text-lg rounded shadow-sm border-2 transition-all shrink-0 ${bg} ${text} ${border} ${isActive ? 'ring-4 ring-purple-400 ring-offset-2 z-10 scale-105' : ''}`}>
+                    {value !== null && value !== undefined ? value : ''}
+                </div>
+            );
+        };
+
+        function App() {
+            const [signalInput, setSignalInput] = useState("0, 0, 0, 1, 1, 1, 0, 0, 1, 0");
+            const [kernelInput, setKernelInput] = useState("-1, 1");
+
+            const SIGNAL = useMemo(() => {
+                const parsed = signalInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+                return parsed.length > 0 ? parsed : [0];
+            }, [signalInput]);
+
+            const KERNEL = useMemo(() => {
+                const parsed = kernelInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+                return parsed.length > 0 ? parsed : [0];
+            }, [kernelInput]);
+
+            const MAX_STEP = Math.max(0, SIGNAL.length - KERNEL.length);
+
+            const [step, setStep] = useState(0);
+            const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+            const autoPlayRef = useRef(null);
+
+            // Handle out of bounds if array shrinks
+            useEffect(() => {
+                if (step > MAX_STEP) setStep(0);
+            }, [MAX_STEP, step]);
+
+            // Calculate entire output array upfront
+            const outputSignal = useMemo(() => {
+                const out = [];
+                for (let i = 0; i <= MAX_STEP; i++) {
+                    let sum = 0;
+                    for (let j = 0; j < KERNEL.length; j++) {
+                        sum += (SIGNAL[i + j] || 0) * KERNEL[j];
+                    }
+                    out.push(sum);
+                }
+                return out;
+            }, [SIGNAL, KERNEL, MAX_STEP]);
+
+            // Current Math Variables
+            const currentWindow = SIGNAL.slice(step, step + KERNEL.length);
+            const currentResult = outputSignal[step];
+
+            // Animation Loop
+            useEffect(() => {
+                if (isAutoPlaying) {
+                    autoPlayRef.current = setInterval(() => {
+                        setStep(prev => {
+                            if (prev >= MAX_STEP) {
+                                setIsAutoPlaying(false);
+                                return prev;
+                            }
+                            return prev + 1;
+                        });
+                    }, 1200); // 1.2 seconds per step for readability
+                } else {
+                    clearInterval(autoPlayRef.current);
+                }
+                return () => clearInterval(autoPlayRef.current);
+            }, [isAutoPlaying]);
+
+            const nextStep = () => setStep(prev => Math.min(prev + 1, MAX_STEP));
+            const prevStep = () => setStep(prev => Math.max(prev - 1, 0));
+            const reset = () => { setStep(0); setIsAutoPlaying(false); };
+
+            // Determine edge type text
+            let edgeText = "Flat / No Change";
+            let edgeColor = "text-slate-400";
+            if (currentResult > 0) { edgeText = "Positive (Rising Edge)"; edgeColor = "text-green-600"; }
+            if (currentResult < 0) { edgeText = "Negative (Falling Edge)"; edgeColor = "text-red-600"; }
+
+            return (
+                <div className="min-h-screen bg-slate-50 p-4 sm:p-8 flex flex-col items-center">
+                    
+                    <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                        
+                        {/* Header & Controls */}
+                        <div className="bg-slate-900 text-white p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold flex items-center gap-2">
+                                    <Icons.Activity /> 1D Convolution Visualizer
+                                </h1>
+                                <p className="text-slate-400 text-sm mt-1">Sliding a kernel across a 1D signal.</p>
+                            </div>
+
+                            <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                                <button onClick={prevStep} disabled={step === 0} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded disabled:opacity-30 transition-colors" title="Previous Step">
+                                    <Icons.SkipBack />
+                                </button>
+                                <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} className={`px-4 py-2 flex items-center gap-2 text-sm font-bold rounded transition-colors ${isAutoPlaying ? 'bg-amber-500 text-slate-900' : 'bg-blue-600 text-white hover:bg-blue-500'}`}>
+                                    {isAutoPlaying ? <><Icons.Pause/> Pause</> : <><Icons.Play/> Play</>}
+                                </button>
+                                <button onClick={nextStep} disabled={step === MAX_STEP} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded disabled:opacity-30 transition-colors" title="Next Step">
+                                    <Icons.SkipForward />
+                                </button>
+                                <div className="w-px bg-slate-700 mx-1"></div>
+                                <button onClick={reset} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition-colors" title="Reset">
+                                    <Icons.Refresh />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Input Parameters */}
+                        <div className="bg-slate-50 border-b border-slate-200 p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Input Signal (comma separated)</label>
+                                <input 
+                                    type="text" 
+                                    value={signalInput} 
+                                    onChange={(e) => { setSignalInput(e.target.value); setStep(0); setIsAutoPlaying(false); }}
+                                    className="w-full mt-2 p-3 border border-slate-300 rounded-lg font-mono text-sm shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mt-[-4px] mb-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Kernel</label>
+                                    <select 
+                                        onChange={(e) => { if(e.target.value) { setKernelInput(e.target.value); setStep(0); setIsAutoPlaying(false); e.target.value=''; } }}
+                                        className="text-xs border border-slate-200 rounded py-0.5 px-1 text-slate-600 bg-white cursor-pointer outline-none"
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>Presets...</option>
+                                        <option value="-1, 1">Basic Edge [-1, 1]</option>
+                                        <option value="-1, 0, 1">Symmetric Edge [-1, 0, 1]</option>
+                                        <option value="1, 1, 1">Smoothing [1, 1, 1]</option>
+                                        <option value="-1, 2, -1">Peak Detector [-1, 2, -1]</option>
+                                    </select>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={kernelInput} 
+                                    onChange={(e) => { setKernelInput(e.target.value); setStep(0); setIsAutoPlaying(false); }}
+                                    className="w-full p-3 border border-slate-300 rounded-lg font-mono text-sm shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-12">
+                            
+                            {/* Visual Grid Area */}
+                            <div className="w-full overflow-x-auto pb-6">
+                                <div className="flex justify-center min-w-max">
+                                    <div className="grid grid-cols-[80px_1fr] md:grid-cols-[120px_1fr] gap-y-4 gap-x-3 md:gap-x-4 items-center">
+                                        
+                                        {/* Visualization Graph Row */}
+                                        <div className="text-right text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider h-16 flex items-center justify-end pb-2 border-b-2 border-slate-100/0">
+                                            Signal Wave
+                                        </div>
+                                        <div className="flex gap-1 sm:gap-2 h-16 border-b-2 border-slate-200 pb-1 mb-2 relative min-w-max">
+                                            {/* Invisible spacers to set exact width matching the ValueCells */}
+                                            {SIGNAL.map((_, i) => (
+                                                <div key={`spacer-${i}`} className="w-8 sm:w-10 md:w-12 shrink-0 h-full"></div>
+                                            ))}
+                                            
+                                            {/* The Square Wave SVG Overlay */}
+                                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                {/* Zero Line */}
+                                                <line x1="0" y1="50" x2="100" y2="50" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="1 1" vectorEffect="non-scaling-stroke" />
+                                                
+                                                {/* Base Signal Line */}
+                                                <path 
+                                                    d={(() => {
+                                                        const maxAbs = Math.max(...SIGNAL.map(Math.abs), 1);
+                                                        const N = Math.max(SIGNAL.length, 1);
+                                                        let d = "";
+                                                        for (let i = 0; i < N; i++) {
+                                                            const y = 50 - (SIGNAL[i] / maxAbs) * 40;
+                                                            const leftX = (i / N) * 100;
+                                                            const rightX = ((i + 1) / N) * 100;
+                                                            if (i === 0) d += `M ${leftX} ${y} `;
+                                                            else d += `L ${leftX} ${y} `;
+                                                            d += `L ${rightX} ${y} `;
+                                                        }
+                                                        return d;
+                                                    })()}
+                                                    fill="none" 
+                                                    stroke="#94a3b8" 
+                                                    strokeWidth="2" 
+                                                    vectorEffect="non-scaling-stroke" 
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+
+                                                {/* Highlighted Window Signal Line */}
+                                                <path 
+                                                    d={(() => {
+                                                        const maxAbs = Math.max(...SIGNAL.map(Math.abs), 1);
+                                                        const N = Math.max(SIGNAL.length, 1);
+                                                        let d = "";
+                                                        let started = false;
+                                                        for (let i = 0; i < N; i++) {
+                                                            if (i >= step && i < step + KERNEL.length) {
+                                                                const y = 50 - (SIGNAL[i] / maxAbs) * 40;
+                                                                const leftX = (i / N) * 100;
+                                                                const rightX = ((i + 1) / N) * 100;
+                                                                if (!started) {
+                                                                    d += `M ${leftX} ${y} `;
+                                                                    started = true;
+                                                                } else {
+                                                                    d += `L ${leftX} ${y} `;
+                                                                }
+                                                                d += `L ${rightX} ${y} `;
+                                                            }
+                                                        }
+                                                        return d;
+                                                    })()}
+                                                    fill="none" 
+                                                    stroke="#a855f7" 
+                                                    strokeWidth="4" 
+                                                    vectorEffect="non-scaling-stroke" 
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+                                            </svg>
+                                        </div>
+
+                                        {/* 1. Input Signal */}
+                                        <div className="text-right text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                            Input Signal
+                                        </div>
+                                        <div className="flex gap-1 sm:gap-2 relative z-0">
+                                            {SIGNAL.map((val, i) => (
+                                                <ValueCell 
+                                                    key={`sig-${i}`} 
+                                                    value={val} 
+                                                    isActive={i >= step && i < step + KERNEL.length} 
+                                                />
+                                            ))}
+                                        </div>
+
+                                        {/* 2. Sliding Kernel */}
+                                        <div className="text-right text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                            Kernel
+                                        </div>
+                                        <div className="flex gap-1 sm:gap-2 mt-2 relative z-10">
+                                            {Array.from({ length: Math.max(SIGNAL.length, step + KERNEL.length) }).map((_, i) => {
+                                                if (i >= step && i < step + KERNEL.length) {
+                                                    const kernelIndex = i - step;
+                                                    return <ValueCell key={`k-${i}`} value={KERNEL[kernelIndex]} isKernel />;
+                                                }
+                                                return <div key={`empty-${i}`} className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 shrink-0"></div>; 
+                                            })}
+                                        </div>
+
+                                        {/* 3. Output Feature Map */}
+                                        <div className="text-right text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mt-8 md:mt-12">
+                                            Output
+                                        </div>
+                                        <div className="flex gap-1 sm:gap-2 mt-8 md:mt-12 relative z-0">
+                                            {Array.from({ length: SIGNAL.length }).map((_, i) => {
+                                                const kernelCenter = Math.floor(KERNEL.length / 2);
+                                                const outIndex = i - kernelCenter;
+                                                
+                                                if (outIndex >= 0 && outIndex <= MAX_STEP) {
+                                                    const isComputed = outIndex <= step;
+                                                    const isCurrent = outIndex === step;
+                                                    
+                                                    return (
+                                                        <ValueCell 
+                                                            key={`out-${i}`} 
+                                                            value={isComputed ? outputSignal[outIndex] : "?"} 
+                                                            isActive={isCurrent}
+                                                        />
+                                                    );
+                                                }
+                                                return <div key={`out-empty-${i}`} className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 shrink-0"></div>;
+                                            })}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Math Computation Area */}
+                            <div className="max-w-2xl mx-auto bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-inner">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">
+                                    Step {step + 1} Computation (Dot Product)
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                                    
+                                    {/* The Formula */}
+                                    <div className="md:col-span-2 font-mono text-sm sm:text-base bg-white p-4 rounded shadow-sm border border-slate-100 flex flex-col gap-2 overflow-x-auto">
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500 mr-4">Signal Window:</span>
+                                            <span className="font-bold text-slate-800">[{currentWindow.join(', ')}]</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-slate-100 pb-2">
+                                            <span className="text-slate-500 mr-4">Kernel:</span>
+                                            <span className="font-bold text-slate-800">[{KERNEL.join(', ')}]</span>
+                                        </div>
+                                        <div className="flex justify-between pt-2">
+                                            <span className="text-slate-500 mr-4">Multiply & Sum:</span>
+                                            <span className="flex flex-wrap gap-1 justify-end min-w-max">
+                                                {currentWindow.map((s, idx) => (
+                                                    <span key={idx}>
+                                                        <span className={s*KERNEL[idx] !== 0 ? "font-bold text-blue-600" : "text-slate-400"}>
+                                                            ({s}×{KERNEL[idx]})
+                                                        </span>
+                                                        {idx < currentWindow.length - 1 ? " + " : ""}
+                                                    </span>
+                                                ))}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* The Result & Intuition */}
+                                    <div className="flex flex-col items-center justify-center text-center">
+                                        <div className="text-4xl font-black font-mono text-slate-800 mb-2">
+                                            = {currentResult !== undefined ? currentResult : "?"}
+                                        </div>
+                                        <div className={`text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full border ${currentResult > 0 ? 'bg-green-50 border-green-200 text-green-700' : currentResult < 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
+                                            {edgeText}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                {/* Dynamic Kernel Explanation */}
+                                <div className="mt-6 text-sm text-slate-600 border-l-4 border-blue-400 pl-4 bg-white p-3 shadow-sm rounded-r">
+                                    <strong>Kernel Analysis:</strong> You are currently using a <code>[{KERNEL.join(', ')}]</code> kernel. 
+                                    <br/><br/>
+                                    {Math.abs(KERNEL.reduce((a, b) => a + b, 0)) < 0.001 
+                                        ? <span><strong>Edge Detector:</strong> Because the weights sum to zero, this kernel cancels out flat regions (outputs 0). It only produces a spike when it slides over a change or "edge" in the signal.</span>
+                                        : KERNEL.every(w => w >= 0) 
+                                            ? <span><strong>Smoothing Filter:</strong> Because all weights are positive, this kernel acts like a moving average or blur. It smooths out sharp spikes in the signal.</span>
+                                            : <span><strong>Pattern Matcher / Matched Filter:</strong> This kernel outputs the highest value when the signal perfectly aligns with its positive and negative weights. It is actively "looking" for a specific shape in the data!</span>
+                                    }
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
